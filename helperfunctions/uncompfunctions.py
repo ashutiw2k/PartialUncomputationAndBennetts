@@ -60,7 +60,8 @@ def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx):
     node_adj = circuit_graph.adj_direction(idx, True)
 
     # Check, may need to modify?
-    assert node.opname not in NON_QFREE
+    if node.qubit_type is ANCILLA:
+        assert node.opname not in NON_QFREE
 
     # Filter all the incoming edges to get the control edges controlling the node.
     try:
