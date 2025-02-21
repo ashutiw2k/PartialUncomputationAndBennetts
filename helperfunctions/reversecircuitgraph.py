@@ -42,3 +42,16 @@ def reverse_all_operations(circuit_graph : rustworkx.PyDiGraph):
     
     return uncomp_circuit_graph
 
+def uncomp_operations(circuit_graph : rustworkx.PyDiGraph):
+    uncomp_circuit_graph = copy.deepcopy(circuit_graph)
+    nodelist = list(rustworkx.topological_sort(circuit_graph))
+    nodelist.reverse()
+    for id in nodelist:
+        node = circuit_graph.get_node_data(id)
+        if not node.qubit_type is OUTPUT and node.node_type is COMP and not node.is_uncomputed:
+            cycle = add_uncomputation_step(uncomp_circuit_graph, id)
+            if cycle:
+                print(f'Cycle found: {cycle}')
+    
+    return uncomp_circuit_graph
+

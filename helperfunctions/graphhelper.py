@@ -24,6 +24,7 @@ class CGNode:
         self.node_num = -1
         self.mark = False
         self.theta = 0.0
+        self.is_uncomputed = False
 
     def set_index(self, index):
         self.index = index

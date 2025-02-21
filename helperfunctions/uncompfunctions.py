@@ -124,6 +124,7 @@ def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx):
 
     # print('----------------------------------------')
 
+    node.is_uncomputed = True
 
     return rustworkx.digraph_find_cycle(circuit_graph)
 
