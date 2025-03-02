@@ -49,7 +49,7 @@ def get_comp_node_index(circuit_graph: rustworkx.PyDiGraph, node_index):
     return node_index
 
 
-def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx):
+def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx, return_uncomp_node = False):
     '''
     PLDI's UncompStep implementation
     '''
@@ -126,7 +126,11 @@ def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx):
 
     node.is_uncomputed = True
 
-    return rustworkx.digraph_find_cycle(circuit_graph)
+    if return_uncomp_node:
+        return uncomp_node_index, rustworkx.digraph_find_cycle(circuit_graph)
+
+    else:
+        return rustworkx.digraph_find_cycle(circuit_graph)
 
 def add_uncomputation(circuit_graph: rustworkx.PyDiGraph, ancillas:List[str], allow_cycle=False):
     '''
