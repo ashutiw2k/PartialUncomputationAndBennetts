@@ -56,6 +56,15 @@ def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx, return_uncom
     # Get node data
     node = circuit_graph.get_node_data(idx)
 
+    if node.is_uncomputed:
+        print(f'The node {node.simple_graph_label()} of index {idx} is already uncomputed.')
+
+        if return_uncomp_node:
+            return node.uncomp_node_index, rustworkx.digraph_find_cycle(circuit_graph)
+        else:
+            return rustworkx.digraph_find_cycle(circuit_graph)
+
+
     # Get all the edges coming into the node
     node_adj = circuit_graph.adj_direction(idx, True)
 
@@ -91,6 +100,7 @@ def add_uncomputation_step(circuit_graph: rustworkx.PyDiGraph, idx, return_uncom
     circuit_graph.get_node_data(uncomp_node_index).set_nodenum(
         circuit_graph.get_node_data(node.get_index()).get_nodenum() - 1
     )
+    node.uncomp_node_index = uncomp_node_index
 
     # Adding Control Edges and the antidep of control edges. 
     # a*[n-1] - -> v | c --> v (c in ctrls of a*[n-1])
