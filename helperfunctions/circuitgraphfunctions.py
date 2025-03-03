@@ -146,14 +146,16 @@ def get_uncomp_circuit(circuit_graph: rustworkx.PyDiGraph):
         # print(circuit_graph.nodes()[idx])
         node = circuit_graph.get_node_data(idx) 
         # print(node)
-        node_adj = circuit_graph.adj(idx)
+        
+        node_incoming_edges = circuit_graph.adj_direction(idx, True)
+        
         try:
-            node_prev_idx = list(filter(lambda x: x[1] == TARGET and x[0] < node.get_index(), list(node_adj.items()))).pop()[0]
+            node_prev_idx = list(filter(lambda x: x[1] == TARGET, list(node_incoming_edges.items()))).pop()[0]
         except IndexError:
             node_prev_idx = None
 
         try:
-            node_controls_idx = list(map(lambda x: x[0], list(filter(lambda x: x[1] == CONTROL and x[0] < node.get_index(), list(node_adj.items())))))
+            node_controls_idx = list(map(lambda x: x[0], list(filter(lambda x: x[1] == CONTROL, list(node_incoming_edges.items())))))
         except IndexError:
             node_controls_idx = []
 
