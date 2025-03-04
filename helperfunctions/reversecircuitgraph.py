@@ -106,11 +106,7 @@ def add_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph):
     # or uncomp node with node num 'i' exists. 
 
     uncomp_node_idx, has_cycle = add_uncomputation_step(circuit_graph, node_index, return_uncomp_node=True)
-
-    if has_cycle:
-        print(f'CG has cycles')    
-        
-
+          
     # uncomp_node = circuit_graph.get_node_data(uncomp_node_idx)
 
     # print(uncomp_node)
@@ -144,6 +140,9 @@ def add_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph):
     # for n in edges_to_remove:
     #     circuit_graph.remove_edge(n,node_index)
 
+    has_cycle = rustworkx.digraph_find_cycle(circuit_graph)
+    if has_cycle:
+        print(f'Added Uncomp for {comp_node.simple_graph_label()} but CG has cycles')
 
     return circuit_graph
 
