@@ -42,7 +42,7 @@ def reverse_all_operations(circuit_graph : rustworkx.PyDiGraph):
     
     return uncomp_circuit_graph
 
-def uncomp_all_operations(circuit_graph : rustworkx.PyDiGraph):
+def uncomp_all_operations_using_circuitgraph(circuit_graph : rustworkx.PyDiGraph):
     uncomp_circuit_graph = copy.deepcopy(circuit_graph)
     nodelist = list(rustworkx.topological_sort(circuit_graph))
     nodelist.reverse()
@@ -204,9 +204,14 @@ def greedily_select_input_node(circuit_graph:rustworkx.PyDiGraph):
     best_index = 0
     for idx in circuit_graph.node_indices():
         node = circuit_graph.get_node_data(idx)
-        best_node = circuit_graph.get_node_data(best_index)
+        if node.qubit_type is INPUT and node.node_type is COMP and not node.is_uncomputed:
+            best_index = idx
+            break
 
-        if  node.qubit_type is INPUT and node.node_type is COMP \
+    for idx in circuit_graph.node_indices():
+        node = circuit_graph.get_node_data(idx)
+        
+        if  node.qubit_type is INPUT and node.node_type is COMP and not node.is_uncomputed \
             and greedy_metric_num_uncomp_antidep(idx, circuit_graph) > greedy_metric_num_uncomp_antidep(best_index, circuit_graph) :
             
             best_index = idx

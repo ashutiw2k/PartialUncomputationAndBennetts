@@ -281,6 +281,7 @@ def random_quantum_circuit_large_with_params(num_q=5, num_a=5, num_g=25,
     return circuit, num_q, num_a, num_g
 
 def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50, 
+                                            add_init = True,  
                                             add_outputs = False,
                                             add_random_h = False,
                                             percent_cc_gates = 0.8,
@@ -312,10 +313,10 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
     else:
         circuit = QuantumCircuit(in_q, an_q)
 
-
-    for q in in_q:
-        circuit.x(q)
-        circuit.h(q)
+    if add_init:
+        for q in in_q:
+            circuit.x(q)
+            circuit.h(q)
     
     rng = np.random.default_rng()
     gate_dist = rng.random(size=num_g)

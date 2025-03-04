@@ -8,7 +8,7 @@ import numpy as np
 from rustworkx import digraph_find_cycle
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import uncompute_input_nodes_greedy, uncomp_all_operations
+from helperfunctions.reversecircuitgraph import uncompute_input_nodes_greedy, uncomp_all_operations_using_circuitgraph
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
@@ -28,7 +28,7 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
 
     for i in range(num_exp):
         _circuit, q,a,g = random_quantum_circuit_varied_percentages(
-            num_q=num_q, num_a=num_a, num_g=num_g, add_outputs=True,
+            num_q=num_q, num_a=num_a, num_g=num_g, add_outputs=True, add_init=False,
             percent_cc_gates=percent_cc_gates, percent_aa_gates=percent_aa_gates,
             percent_ac_gates=percent_ac_gates, percent_ca_gates=percent_ca_gates)
         
@@ -44,7 +44,7 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
             i -= 1
             continue
         
-        _bennetts_uncomp_circuit_graph = uncomp_all_operations(_computation_circuit_graph)
+        _bennetts_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
         _greedy_input_uncomp_circuit_graph = uncompute_input_nodes_greedy(_ancillae_full_uncomp_circuit_graph)
 
         _bennetts_uncomp_circuit = get_uncomp_circuit(_bennetts_uncomp_circuit_graph)
@@ -78,11 +78,11 @@ def main():
     avg_greedy = []
     x_axis = []
     for num_gates in range(25,100,5):
-        diff_bennetts, diff_greedy = evaluation_function(num_exp=3, num_g=num_gates, circ_decompose=0)
+        diff_bennetts, diff_greedy = evaluation_function(num_exp=10, num_g=num_gates, circ_decompose=0)
         avg_diff_bennetts = np.average(diff_bennetts)
         avg_diff_greedy = np.average(diff_greedy)
         
-        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Greedy added {np.average(avg_diff_greedy)}')
+        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Greedy added {np.average(avg_diff_greedy)}', file=sys.stderr)
 
         x_axis.append(num_gates)
         avg_bennetts.append(avg_diff_bennetts)
@@ -95,7 +95,8 @@ def main():
                                  image_write_path='evaluation_plots', 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Total number of computation gates',
-                                 ylabel='Average number of uncomp gates added')        
+                                 ylabel='Average number of uncomp gates added', yfont=16,
+                                 legends=True)        
 
     pass
 

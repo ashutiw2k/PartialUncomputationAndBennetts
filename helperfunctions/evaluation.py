@@ -718,6 +718,10 @@ def plot_variable_results_better(x_axis, data_lists, data_labels,
     for i, data in enumerate(data_lists):
         ax.plot(x_axis, data, marker='o', markersize=data_point_sz[i],
                  linestyle='-', label=data_labels[i], color=data_colors[i])
+        
+    if legends:
+        plt.legend(bbox_to_anchor=(0, 1.01, 1, 0.2), loc='lower left',
+            ncol=5, mode="expand", borderaxespad=0, fontsize=9)    
     
     plt.xticks(fontsize=24)
     plt.yticks(fontsize=24)
