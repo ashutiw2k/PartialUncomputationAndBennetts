@@ -42,7 +42,7 @@ def reverse_all_operations(circuit_graph : rustworkx.PyDiGraph):
     
     return uncomp_circuit_graph
 
-def uncomp_operations(circuit_graph : rustworkx.PyDiGraph):
+def uncomp_all_operations(circuit_graph : rustworkx.PyDiGraph):
     uncomp_circuit_graph = copy.deepcopy(circuit_graph)
     nodelist = list(rustworkx.topological_sort(circuit_graph))
     nodelist.reverse()
@@ -105,6 +105,7 @@ def add_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph):
     # At this point, either the input qubit node should have no target edge, 
     # or uncomp node with node num 'i' exists. 
 
+    print(f'Now uncomputing {node_index}:{comp_node.simple_graph_label()}')
     uncomp_node_idx, has_cycle = add_uncomputation_step(circuit_graph, node_index, return_uncomp_node=True)
           
     # uncomp_node = circuit_graph.get_node_data(uncomp_node_idx)
@@ -143,9 +144,11 @@ def add_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph):
     has_cycle = rustworkx.digraph_find_cycle(circuit_graph)
     if has_cycle:
         print(f'Added Uncomp for {comp_node.simple_graph_label()} but CG has cycles')
+    else:
+        print(f'Cycles from CG removed when added uncomp for {comp_node.simple_graph_label()}!')
+
 
     return circuit_graph
-
 
 
 def remove_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph):
@@ -159,26 +162,62 @@ def remove_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph)
 
     pass
 
-def reverse_input_qubits(circuit_graph:rustworkx.PyDiGraph):
-    input_init_nodes = [node for node in circuit_graph.nodes() if node.node_type == INIT and node.qubit_type is not ANCILLA]
-    input_qubits = [node.label for node in input_init_nodes]
-    input_qubits_counter = collections.Counter(input_qubits)
-    input_qubits_counter.subtract(input_qubits)
-    input_target_nodes = {}
-    for node in input_init_nodes:
-        qubit = node.label
-        targets = []
-        target_node = circuit_graph.find_adjacent_node_by_edge(node.get_index(), lambda x : x == TARGET)
+# def reverse_input_qubits(circuit_graph:rustworkx.PyDiGraph):
+#     input_init_nodes = [node for node in circuit_graph.nodes() if node.node_type == INIT and node.qubit_type is not ANCILLA]
+#     input_qubits = [node.label for node in input_init_nodes]
+#     input_qubits_counter = collections.Counter(input_qubits)
+#     input_qubits_counter.subtract(input_qubits)
+#     input_target_nodes = {}
+#     for node in input_init_nodes:
+#         qubit = node.label
+#         targets = []
+#         target_node = circuit_graph.find_adjacent_node_by_edge(node.get_index(), lambda x : x == TARGET)
 
-        while target_node:
-            targets.append(target_node)
-            try:
-                target_node = circuit_graph.find_adjacent_node_by_edge(target_node.get_index(), lambda x : x == TARGET)
-            except:
-                target_node = None
+#         while target_node:
+#             targets.append(target_node)
+#             try:
+#                 target_node = circuit_graph.find_adjacent_node_by_edge(target_node.get_index(), lambda x : x == TARGET)
+#             except:
+#                 target_node = None
 
-        input_target_nodes.update({qubit:targets})
+#         input_target_nodes.update({qubit:targets})
 
-    print(input_target_nodes)
+#     print(input_target_nodes)
 
-    pass
+#     pass
+
+
+def greedy_metric_num_uncomp_antidep(node_index:int, circuit_graph:rustworkx.PyDiGraph):
+    '''
+    The greedy metric here is most number of anti dependency edges from ancilla uncomp nodes 
+    that come into the node.
+    '''
+    return len([x for x,y in circuit_graph.adj_direction(node_index, True).items() 
+                        if y is ANTIDEP and circuit_graph.get_node_data(x).qubit_type is ANCILLA 
+                        and circuit_graph.get_node_data(x).node_type is UNCOMP])
+
+def greedily_select_input_node(circuit_graph:rustworkx.PyDiGraph):
+    '''
+    This method determines the best input qubit to uncompute by choosing the input qubit
+    with the specified greedy metric. 
+    '''
+    best_index = 0
+    for idx in circuit_graph.node_indices():
+        node = circuit_graph.get_node_data(idx)
+        best_node = circuit_graph.get_node_data(best_index)
+
+        if  node.qubit_type is INPUT and node.node_type is COMP \
+            and greedy_metric_num_uncomp_antidep(idx, circuit_graph) > greedy_metric_num_uncomp_antidep(best_index, circuit_graph) :
+            
+            best_index = idx
+
+    return best_index
+
+def uncompute_input_nodes_greedy(circuit_graph:rustworkx.PyDiGraph):
+    while rustworkx.digraph_find_cycle(circuit_graph):
+        best_node_to_uncompute = greedily_select_input_node(circuit_graph)
+        print(f'Best Node to uncompute is {best_node_to_uncompute} : {circuit_graph.get_node_data(best_node_to_uncompute).simple_graph_label()}')
+        add_uncomp_input_node(best_node_to_uncompute, circuit_graph)
+    
+    return circuit_graph
+
