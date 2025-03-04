@@ -24,7 +24,7 @@ CONTROL = StringConstants.CONTROL.value
 ANTIDEP = StringConstants.ANTIDEP.value
 
 
-def get_computation_graph(circuit: qiskit.circuit.QuantumCircuit, ancillas: List, outputs=None):
+def get_computation_graph(circuit: qiskit.circuit.QuantumCircuit, ancillas: List, outputs: List=[]):
     circuit_graph = rustworkx.PyDiGraph(multigraph=False)
     last_node_index = {}
     # Add the initial qubits

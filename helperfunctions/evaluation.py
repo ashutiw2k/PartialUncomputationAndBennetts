@@ -624,7 +624,7 @@ def plot_beautiful_ancilla_results_better(x_axis, ex_uncomp_avg, gf_uncomp_avg, 
     fig, ax = plt.subplots(figsize=(8,6))
 
     if og is not None:
-        ax.plot(x_axis, og, marker='o', markersize=12,
+        ax.plot(x_axis, og, marker='o', markersize=16,
                  linestyle='-', label='No Uncomputation', color=mcolors.CSS4_COLORS['red'])
         ax.plot(x_axis, ex_uncomp_avg, marker='o', markersize=12, 
                 linestyle='-', label='Exhaustive', color=mcolors.CSS4_COLORS['darkorange'])
@@ -675,3 +675,57 @@ def plot_beautiful_ancilla_results_better(x_axis, ex_uncomp_avg, gf_uncomp_avg, 
     plt.show()
 #     plt.close()
 
+def plot_variable_results_better(x_axis, data_lists, data_labels,  
+                         figname='NEEDFIGNAME', image_write_path='NEEDIMAGEPATH',
+                 title='Number of Ancillas Uncomputed', 
+                 xlabel = 'Total Number of Ancillas', xfont=24,
+                 ylabel = 'Average Ancillae Uncomputed', yfont=24,
+                 legends=False):
+
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    data_colors = [
+        mcolors.CSS4_COLORS['red'],
+        mcolors.CSS4_COLORS['darkorange'],
+        mcolors.CSS4_COLORS['forestgreen'],
+        mcolors.CSS4_COLORS['mediumblue']
+    ]
+
+    dp_max = 16
+    data_point_sz = [numpy.round((i+1) * dp_max/len(data_lists)) for i in range(len(data_lists))]
+    data_point_sz.reverse()
+
+    # if og is not None:
+    #     ax.plot(x_axis, og, marker='o', markersize=12,
+    #              linestyle='-', label='No Uncomputation', color=mcolors.CSS4_COLORS['red'])
+    #     ax.plot(x_axis, ex_uncomp_avg, marker='o', markersize=12, 
+    #             linestyle='-', label='Exhaustive', color=mcolors.CSS4_COLORS['darkorange'])
+    #     ax.plot(x_axis, gf_uncomp_avg, marker='o', markersize=8,
+    #             linestyle='-', label='Greedy-Full', color=mcolors.CSS4_COLORS['forestgreen'])
+    #     ax.plot(x_axis, gp_uncomp_avg, marker='o', markersize=4,
+    #             linestyle='-', label='Greedy-Partial', color=mcolors.CSS4_COLORS['mediumblue'])
+    #     ax.legend(bbox_to_anchor=(0, 1.01, 1, 0.2), loc='lower left',
+    #             ncol=5, mode="expand", borderaxespad=0)
+
+    # else:
+    #     ax.plot(x_axis, ex_uncomp_avg, marker='o', markersize=15, 
+    #          linestyle='-', label='Exhaustive', color=mcolors.CSS4_COLORS['darkorange'])
+    #     ax.plot(x_axis, gf_uncomp_avg, marker='o', markersize=10,
+    #          linestyle='-', label='Greedy-Full', color=mcolors.CSS4_COLORS['forestgreen'])
+    #     ax.plot(x_axis, gp_uncomp_avg, marker='o', markersize=5,
+    #          linestyle='-', label='Greedy-Partial', color=mcolors.CSS4_COLORS['mediumblue'])
+
+    for i, data in enumerate(data_lists):
+        ax.plot(x_axis, data, marker='o', markersize=data_point_sz[i],
+                 linestyle='-', label=data_labels[i], color=data_colors[i])
+    
+    plt.xticks(fontsize=24)
+    plt.yticks(fontsize=24)
+
+
+    ax.set_xlabel(xlabel, fontsize=xfont)
+    ax.set_ylabel(ylabel, fontsize=yfont)    
+        
+    plt.tight_layout()
+    plt.savefig(os.path.abspath(f'{image_write_path}/{figname}'))
+    plt.show()

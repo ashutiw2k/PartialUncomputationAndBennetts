@@ -6,12 +6,25 @@ from numpy import pi
 
 from tqdm import tqdm
 
+from typing import Literal
+
 from .graphhelper import breakdown_qubit
+from .constants import StringConstants
+
+INPUT = StringConstants.INPUT.value
+ANCILLA = StringConstants.ANCILLA.value
+OUTPUT = StringConstants.OUTPUT.value
 
 logger = logging.getLogger(__name__)
 
-def get_ancillas_of_circuit(circuit, num_a):
-    return [breakdown_qubit(q)['label'] for q in circuit.qubits[-num_a:]]
+def get_qubits_of_circuit(circuit:QuantumCircuit, num: int, 
+                            type=Literal[INPUT, ANCILLA, OUTPUT]):
+    if type is ANCILLA:
+        return [breakdown_qubit(q)['label'] for q in circuit.qubits[-num:]]
+    elif type is OUTPUT:
+        return [breakdown_qubit(q)['label'] for q in circuit.qubits[num:2*num]]
+    elif type is INPUT:
+        return [breakdown_qubit(q)['label'] for q in circuit.qubits[:num]]
 
 
 # Random quantum circuits generated that only allow for 
@@ -267,7 +280,8 @@ def random_quantum_circuit_large_with_params(num_q=5, num_a=5, num_g=25,
     
     return circuit, num_q, num_a, num_g
 
-def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
+def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50, 
+                                            add_outputs = False,
                                             add_random_h = False,
                                             percent_cc_gates = 0.8,
                                             percent_aa_gates = 0.1,
@@ -289,10 +303,15 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
     ac_gates = 0
     aa_gates = 0
     
-    in_q = QuantumRegister(num_q, name='cq')
+    in_q = QuantumRegister(num_q, name='iq')
     an_q = QuantumRegister(num_a, name='aq')
-    
-    circuit = QuantumCircuit(in_q, an_q)
+
+    if add_outputs:
+        ot_q = QuantumRegister(num_q, name='oq')
+        circuit = QuantumCircuit(in_q, ot_q, an_q)
+    else:
+        circuit = QuantumCircuit(in_q, an_q)
+
 
     for q in in_q:
         circuit.x(q)
@@ -355,4 +374,8 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
     logger.info(f'Built circuit with {num_q} input, {num_a} ancilla and {num_g} gates.')
     logger.info(f'There are {hc_gates} H gates acting on the control qubits, {cc_gates} gates acting between control qubits, {ca_gates} gates acting between control and ancilla, {ac_gates} gates acting between ancilla and control and {aa_gates} gates acting between just the ancillas.')
     
+    if add_outputs:
+        for i in range(num_q):
+            circuit.cx(in_q[i], ot_q[i])
+        
     return circuit, num_q, num_a, num_g
