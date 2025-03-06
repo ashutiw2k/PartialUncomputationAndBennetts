@@ -43,7 +43,7 @@ def get_computation_graph(circuit: qiskit.circuit.QuantumCircuit, ancillas: List
         else: 
             qubit_type = ANCILLA if qubit_dict['label'] in ancillas else INPUT
         
-        
+                
         init_node = CGNode(qubit_dict, qubit_type=qubit_type, node_type=INIT)
         index = circuit_graph.add_node(init_node)
         circuit_graph.get_node_data(index).set_index(index)
@@ -56,6 +56,7 @@ def get_computation_graph(circuit: qiskit.circuit.QuantumCircuit, ancillas: List
     # print(last_node_index)
 
     # Adding Computation Gates
+    output_qubit_counter = 0
     for circ_inst in tqdm(circuit_data, desc=f'Adding Nodes for Circuit'):
         opname = circ_inst.operation.name
         qubit_dict_all = []
@@ -75,8 +76,20 @@ def get_computation_graph(circuit: qiskit.circuit.QuantumCircuit, ancillas: List
             qubit_type = ANCILLA if qubit_dict_all[-1]['label'] in ancillas else (OUTPUT if qubit_dict_all[-1]['label'] in outputs else INPUT)         
         else: 
             qubit_type = ANCILLA if qubit_dict_all[-1]['label'] in ancillas else INPUT
+
         
-        opnode = CGNode(qubit_dict_all[-1], qubit_type=qubit_type, node_type=COMP, opname=opname)
+
+        # For bennetts uncomp, once all the output qubit operations are added then 
+        # the remaining gates are uncomp gates. 
+        if outputs and output_qubit_counter == len(outputs):
+            node_type = UNCOMP
+        else:
+            node_type = COMP
+
+        if qubit_type == OUTPUT:
+            output_qubit_counter += 1
+        
+        opnode = CGNode(qubit_dict_all[-1], qubit_type=qubit_type, node_type=node_type, opname=opname)
         
         params = circ_inst.operation.params
         if len(params) == 1:
@@ -85,7 +98,7 @@ def get_computation_graph(circuit: qiskit.circuit.QuantumCircuit, ancillas: List
         opnode_index = circuit_graph.add_child(prev_node_index, opnode, TARGET)
         circuit_graph.get_node_data(opnode_index).set_index(opnode_index)
         circuit_graph.get_node_data(opnode_index).set_nodenum(
-            circuit_graph.get_node_data(prev_node_index).get_nodenum() + 1
+            circuit_graph.get_node_data(prev_node_index).get_nodenum() + (1 if node_type is COMP else -1)
         )
         last_node_index[opnode.label] = opnode_index
 
