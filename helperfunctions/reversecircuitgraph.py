@@ -4,12 +4,13 @@ from itertools import chain, combinations
 import time
 from typing import Dict, List
 import logging
+from qiskit import QuantumCircuit
 import rustworkx
 from tqdm import tqdm
 
 from .uncompfunctions import add_uncomputation_step
 from .constants import StringConstants, ListConstants
-from .graphhelper import CGNode
+from .graphhelper import CGNode, breakdown_qubit
 
 INPUT = StringConstants.INPUT.value
 ANCILLA = StringConstants.ANCILLA.value
@@ -226,3 +227,46 @@ def uncompute_input_nodes_greedy(circuit_graph:rustworkx.PyDiGraph):
     
     return circuit_graph
 
+def get_bennetts_reduced_uncomp_without_reordering(circuit: QuantumCircuit, ancillas: List, num_gates:int):
+    instructions = list(circuit.data[:num_gates])
+
+    ctr = 0
+    for ins in instructions:
+        anc = [1 for q in ins.qubits if breakdown_qubit(q)['label'] in ancillas]
+        if len(anc) == 0:
+            ctr += 1
+        else:
+            break
+    print(f'The first {ctr} gates are between input qubits, they can be ignored in bennetts uncomp.')
+    
+    valid_instructions = instructions[ctr:]
+    valid_instructions.reverse()
+
+    benentts_uncomp_circuit = circuit.copy()
+    for ins in valid_instructions:
+        benentts_uncomp_circuit.append(ins)
+
+    return benentts_uncomp_circuit
+    
+
+def remove_nodes_not_in_bennetts(all_uncomp_graph:rustworkx.PyDiGraph, bennetts_uncomp_graph:rustworkx.PyDiGraph, matcher_func):
+    # Pre-compute all potential matches for faster lookup
+    nodes_to_remove = []
+    new_uncomp_graph = all_uncomp_graph.copy()
+
+    # Optional: If nodes have attributes that can be hashed for quicker comparison
+    # Create a set or dictionary for faster lookups
+    # This assumes node objects have comparable attributes
+    
+    # For each node in the first graph
+    for node in all_uncomp_graph.nodes():
+        # Use any() for short-circuit evaluation
+        if not any(matcher_func(node, b_node) for b_node in bennetts_uncomp_graph.nodes()):
+            nodes_to_remove.append(node.index)
+    
+    # Remove nodes in reverse order to avoid index shifting
+    for node_index in sorted(nodes_to_remove, reverse=True):
+        new_uncomp_graph.remove_node(node_index)
+
+    return new_uncomp_graph
+    

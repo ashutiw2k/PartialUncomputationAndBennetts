@@ -8,10 +8,12 @@ import numpy as np
 from rustworkx import digraph_find_cycle
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import uncompute_input_nodes_greedy, uncomp_all_operations_using_circuitgraph
+from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_circuitgraph
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
+from helperfunctions.graphhelper import node_matcher
+
 from helperfunctions.constants import StringConstants
 
 INPUT = StringConstants.INPUT.value
@@ -36,31 +38,26 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
         ancillae_list = get_qubits_of_circuit(_circuit, a, ANCILLA)
         outputs_list = get_qubits_of_circuit(_circuit, q, OUTPUT) 
 
-        _computation_circuit_graph = get_computation_graph(_circuit, ancillae_list, outputs_list)
-        _ancillae_full_uncomp_circuit_graph, has_cycles = add_uncomputation(_computation_circuit_graph, 
-                                                           ancillae_list, allow_cycle=True)
-        
-        if not digraph_find_cycle(_ancillae_full_uncomp_circuit_graph):
-            print(f'Iteration {i} uncomp was acyclic.')
-            continue
-        else:
-            i += 1
-        
-        _bennetts_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
-        _greedy_input_uncomp_circuit_graph = uncompute_input_nodes_greedy(_ancillae_full_uncomp_circuit_graph)
 
-        _bennetts_uncomp_circuit = get_uncomp_circuit(_bennetts_uncomp_circuit_graph)
-        _greedy_input_uncomp_circuit = get_uncomp_circuit(_greedy_input_uncomp_circuit_graph)
+        i += 1
+
+        # Uncomputation by adding all the gates/nodes to the CG        
+        _computation_circuit_graph = get_computation_graph(_circuit, ancillae_list, outputs_list)
+        _all_full_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
+        _all_uncomp_circuit = get_uncomp_circuit(_all_full_uncomp_circuit_graph)
+        
+        # Uncomputation by just bennetts, no reordering but forcing to drop gates between inputs that occour after all ancillary uncomputation
+        _reduced_input_uncomp_circuit = get_bennetts_reduced_uncomp_without_reordering(_circuit, ancillae_list, g)
 
         if circ_decompose:
             _circuit_gate_num = sum(_circuit.decompose(reps=circ_decompose).count_ops().values())
-            _bennetts_uncomp_num = sum(_bennetts_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
-            _greedy_input_uncomp_num = sum(_greedy_input_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
+            _bennetts_uncomp_num = sum(_all_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
+            _greedy_input_uncomp_num = sum(_reduced_input_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
 
         else:
             _circuit_gate_num = sum(_circuit.count_ops().values())
-            _bennetts_uncomp_num = sum(_bennetts_uncomp_circuit.count_ops().values())
-            _greedy_input_uncomp_num = sum(_greedy_input_uncomp_circuit.count_ops().values())
+            _bennetts_uncomp_num = sum(_all_uncomp_circuit.count_ops().values())
+            _greedy_input_uncomp_num = sum(_reduced_input_uncomp_circuit.count_ops().values())
 
         _bennetts_diff = _bennetts_uncomp_num - _circuit_gate_num
         _greedy_diff = _greedy_input_uncomp_num - _circuit_gate_num
@@ -79,12 +76,13 @@ def main():
     avg_bennetts = []
     avg_greedy = []
     x_axis = []
+    out_file = open('eval_logs.txt', 'w')
     for num_gates in range(25,100,5):
         diff_bennetts, diff_greedy = evaluation_function(num_exp=10, num_g=num_gates, circ_decompose=0)
         avg_diff_bennetts = np.average(diff_bennetts)
         avg_diff_greedy = np.average(diff_greedy)
         
-        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Greedy added {np.average(avg_diff_greedy)}', file=sys.stderr)
+        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Reduced Bennets added {np.average(avg_diff_greedy)}', file=out_file)
 
         x_axis.append(num_gates)
         avg_bennetts.append(avg_diff_bennetts)
@@ -92,15 +90,15 @@ def main():
 
     plot_variable_results_better(x_axis=x_axis, 
                                  data_lists=[avg_bennetts, avg_greedy], 
-                                 data_labels=['Bennetts', 'Greedy'],
-                                 figname='Plot Comparing Bennetts and Greedy Input Uncomp',
+                                 data_labels=['Bennetts', 'Reduced Bennetts'],
+                                 figname='Plot Comparing Bennetts and Reduced Bennetts Uncomp',
                                  image_write_path='evaluation_plots', 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Total number of computation gates',
                                  ylabel='Average number of uncomp gates added', yfont=16,
                                  legends=True)        
 
-    pass
+    out_file.close()
 
 if __name__ == '__main__':
     main()
