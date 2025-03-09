@@ -6,11 +6,12 @@
     "configurations": [
 
         {
-            "name": "Debug Greedy Input Nodes Eval",
+            "name": "Debug Non Greedy Uncomp Eval",
             "type": "debugpy",
             "request": "launch",
-            "program": "evaluation_scripts/eval_greedy_input_nodes_uncomp.py",
-            "console": "integratedTerminal"
+            "program": "evaluation_scripts/eval_non_greedy_uncomp.py",
+            "console": "integratedTerminal",
+            "args": ["eval_configs/config_var_cc_10q5a50g.yaml"]
         }
     ]
 }

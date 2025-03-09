@@ -1,0 +1,9 @@
+type: aa #input, gates, ancilla, cc, ca, ac, aa
+
+num_i: 10
+num_a: 5
+num_g: 50
+
+fig_path: "no_git"
+
+
