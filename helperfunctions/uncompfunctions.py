@@ -229,7 +229,17 @@ def remove_uncomputation_step(uncomp_circuit_graph: rustworkx.PyDiGraph, idx):
     except IndexError:
         controlled_idx = []
 
-    # print(controlled_idx)
+    # try:
+    #     target_edges = list(map(lambda x: x[0], list(filter(lambda x: x[1] == TARGET, list(adj_nodes.items())))))
+    #     if len(target_edges):
+    #         print(f'Node {uncomp_circuit_graph.get_node_data(idx)} has target edges, need to uncompute them first.')
+    #         assert len(target_edges) == 1
+    #         remove_uncomputation_step(uncomp_circuit_graph, target_edges[0])
+    # except:
+    #     pass
+
+
+    print(f'Controlled by the node {uncomp_circuit_graph.get_node_data(idx).simple_graph_label()} : {[uncomp_circuit_graph.get_node_data(c).simple_graph_label() for c in controlled_idx]}')
 
     uncomp_circuit_graph.remove_node(idx)
     

@@ -82,7 +82,7 @@ def main():
         avg_diff_bennetts = np.average(diff_bennetts)
         avg_diff_greedy = np.average(diff_greedy)
         
-        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Reduced Bennets added {np.average(avg_diff_greedy)}', file=out_file)
+        print(f'For {num_gates} gates, Bennetts added {np.ceil(avg_diff_bennetts)} and Reduced Bennets added {np.floor(avg_diff_greedy)}', file=out_file)
 
         x_axis.append(num_gates)
         avg_bennetts.append(avg_diff_bennetts)

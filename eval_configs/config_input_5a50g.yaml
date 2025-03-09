@@ -1,0 +1,17 @@
+type: input #input, gates, ancilla, cc, ca, ac, aa
+
+num_a: 5
+num_g: 50
+
+num_i_min: 5
+num_i_max: 15
+num_i_step: 1
+
+percent_cc: 0.8
+percent_ca: 0.05
+percent_ac: 0.05
+percent_aa: 0.1
+
+fig_path: "no_git"
+
+

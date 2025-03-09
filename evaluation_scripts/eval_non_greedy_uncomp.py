@@ -5,10 +5,12 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))  # Makes helperfunctions discoverable
 
 import numpy as np
+import yaml
 from rustworkx import digraph_find_cycle
+from qiskit import qpy
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_circuitgraph
+from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_circuitgraph, remove_input_nodes_until_required
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
@@ -38,6 +40,10 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
         ancillae_list = get_qubits_of_circuit(_circuit, a, ANCILLA)
         outputs_list = get_qubits_of_circuit(_circuit, q, OUTPUT) 
 
+        with open('random_circuit.qpy', 'wb') as file:
+            qpy.dump(_circuit, file)
+
+
         _computation_circuit_graph = get_computation_graph(_circuit, ancillae_list, outputs_list)
         
         _bennetts_uncomp_reduced_circuit = get_bennetts_reduced_uncomp_without_reordering(_circuit, ancillae_list, g)
@@ -48,17 +54,22 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
         _ancillae_full_uncomp_circuit_graph, has_cycles = add_uncomputation(_computation_circuit_graph, 
                                                            ancillae_list, allow_cycle=True)
         
-        if not digraph_find_cycle(_ancillae_full_uncomp_circuit_graph):
-            print(f'Iteration {i} uncomp was acyclic.')
-            continue
-        else:
-            i += 1
+        # if not digraph_find_cycle(_ancillae_full_uncomp_circuit_graph):
+        #     print(f'Iteration {i} uncomp was acyclic.')
+        #     continue
+        # else:
+
+        i += 1
         
+
         _all_full_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
         _all_uncomp_circuit = get_uncomp_circuit(_all_full_uncomp_circuit_graph)
 
         _reduced_uncomp_circuit_graph = remove_nodes_not_in_bennetts(_all_full_uncomp_circuit_graph, _bennetts_uncomp_reduced_circuit_graph, node_matcher)
-        _reduced_input_uncomp_circuit = get_uncomp_circuit(_reduced_uncomp_circuit_graph)
+        _reduced_input_circuit_graph = remove_input_nodes_until_required(_reduced_uncomp_circuit_graph)
+        
+        
+        _reduced_input_uncomp_circuit = get_uncomp_circuit(_reduced_input_circuit_graph)
 
         if circ_decompose:
             _circuit_gate_num = sum(_circuit.decompose(reps=circ_decompose).count_ops().values())
@@ -82,34 +93,223 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
     
     return diff_bennetts_uncomp_gates, diff_greedy_uncomp_gates
 
-def main():
-    
+def eval_var_gates(config_data):
+        
     avg_bennetts = []
-    avg_greedy = []
+    avg_reduced = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
-    for num_gates in range(25,100,5):
-        diff_bennetts, diff_greedy = evaluation_function(num_exp=10, num_g=num_gates, circ_decompose=0)
+
+    num_i = config_data['num_i']
+    num_a = config_data['num_a']
+
+    num_g_max = config_data['num_g_max']
+    num_g_min = config_data['num_g_min']
+    num_g_step = config_data['num_g_step']
+
+    percent_cc = config_data['percent_cc']
+    percent_ca = config_data['percent_ca']
+    percent_ac = config_data['percent_ac']
+    percent_aa = config_data['percent_aa']
+
+    img_path = config_data['fig_path']
+    
+
+    for num_gates in range(num_g_min, num_g_max+num_g_step, num_g_step):
+        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+                                                         num_q=num_i, num_a=num_a, num_g=num_gates, circ_decompose=0,
+                                                         percent_cc_gates=percent_cc, percent_ca_gates=percent_ca, 
+                                                         percent_ac_gates=percent_ac, percent_aa_gates=percent_aa)
         avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_greedy = np.average(diff_greedy)
+        avg_diff_reduced = np.average(diff_reduced)
         
-        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Reduced added {np.average(avg_diff_greedy)}', file=out_file)
+        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
 
         x_axis.append(num_gates)
         avg_bennetts.append(avg_diff_bennetts)
-        avg_greedy.append(avg_diff_greedy)
+        avg_reduced.append(avg_diff_reduced)
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_greedy], 
+                                 data_lists=[avg_bennetts, avg_reduced], 
                                  data_labels=['Bennetts', 'Reduced'],
-                                 figname='Plot Comparing Bennetts and Reduced Input Uncomp',
-                                 image_write_path='evaluation_plots', 
+                                 figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g_min}-{num_g_max}g',
+                                 image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Total number of computation gates',
                                  ylabel='Average number of uncomp gates added', yfont=16,
                                  legends=True)        
 
     out_file.close()
+    
+def eval_var_ancilla(config_data):
+        
+    avg_bennetts = []
+    avg_reduced = []
+    x_axis = []
+    out_file = open('eval_logs.txt', 'w')
+
+    num_i = config_data['num_i']
+    num_g = config_data['num_g']
+
+    num_a_max = config_data['num_a_max']
+    num_a_min = config_data['num_a_min']
+    num_a_step = config_data['num_a_step']
+
+    percent_cc = config_data['percent_cc']
+    percent_ca = config_data['percent_ca']
+    percent_ac = config_data['percent_ac']
+    percent_aa = config_data['percent_aa']
+
+    img_path = config_data['fig_path']
+    
+
+    for num_a in range(num_a_min, num_a_max+num_a_step, num_a_step):
+        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+                                                         num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
+                                                         percent_cc_gates=percent_cc, percent_ca_gates=percent_ca, 
+                                                         percent_ac_gates=percent_ac, percent_aa_gates=percent_aa)
+        avg_diff_bennetts = np.average(diff_bennetts)
+        avg_diff_reduced = np.average(diff_reduced)
+        
+        print(f'For {num_a} ancillae, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+
+        x_axis.append(num_a)
+        avg_bennetts.append(avg_diff_bennetts)
+        avg_reduced.append(avg_diff_reduced)
+
+    plot_variable_results_better(x_axis=x_axis, 
+                                 data_lists=[avg_bennetts, avg_reduced], 
+                                 data_labels=['Bennetts', 'Reduced'],
+                                 figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a_min}-{num_a_max}a_{num_g}g',
+                                 image_write_path=img_path, 
+                                 title='Average Uncomputation Gates', 
+                                 xlabel='Total number of ancillae',
+                                 ylabel='Average number of uncomp gates added', yfont=16,
+                                 legends=True)        
+
+    out_file.close()
+    
+def eval_var_input(config_data):
+        
+    avg_bennetts = []
+    avg_reduced = []
+    x_axis = []
+    out_file = open('eval_logs.txt', 'w')
+
+    num_a = config_data['num_a']
+    num_g = config_data['num_g']
+
+    num_i_max = config_data['num_i_max']
+    num_i_min = config_data['num_i_min']
+    num_i_step = config_data['num_i_step']
+
+    percent_cc = config_data['percent_cc']
+    percent_ca = config_data['percent_ca']
+    percent_ac = config_data['percent_ac']
+    percent_aa = config_data['percent_aa']
+
+    img_path = config_data['fig_path']
+    
+
+    for num_i in range(num_i_min, num_i_max+num_i_step, num_i_step):
+        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+                                                         num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
+                                                         percent_cc_gates=percent_cc, percent_ca_gates=percent_ca, 
+                                                         percent_ac_gates=percent_ac, percent_aa_gates=percent_aa)
+        avg_diff_bennetts = np.average(diff_bennetts)
+        avg_diff_reduced = np.average(diff_reduced)
+        
+        print(f'For {num_i} input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+
+        x_axis.append(num_i)
+        avg_bennetts.append(avg_diff_bennetts)
+        avg_reduced.append(avg_diff_reduced)
+
+    plot_variable_results_better(x_axis=x_axis, 
+                                 data_lists=[avg_bennetts, avg_reduced], 
+                                 data_labels=['Bennetts', 'Reduced'],
+                                 figname=f'Plot_Bennetts_Reduced_Input_{num_i_min}-{num_i_max}q_{num_a}a_{num_g}g',
+                                 image_write_path=img_path, 
+                                 title='Average Uncomputation Gates', 
+                                 xlabel='Total number of input qubits',
+                                 ylabel='Average number of uncomp gates added', yfont=16,
+                                 legends=True)        
+
+    out_file.close()
+    
+    
+def eval_var_percent_cc(config_data):
+        
+    avg_bennetts = []
+    avg_reduced = []
+    x_axis = []
+    out_file = open('eval_logs.txt', 'w')
+    
+    num_i = config_data['num_i']
+    num_a = config_data['num_a']
+    num_g = config_data['num_g']
+
+    # percent_cc = config_data['percent_cc']
+    # percent_ca = config_data['percent_ca']
+    # percent_ac = config_data['percent_ac']
+    # percent_aa = config_data['percent_aa']
+
+    img_path = config_data['fig_path']
+    
+
+    for percent_cc in range(0, 110, 10):
+
+        other_gates_percent = (100-percent_cc)/3
+
+        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+                                                         num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
+                                                         percent_cc_gates=percent_cc, percent_ca_gates=other_gates_percent, 
+                                                         percent_ac_gates=other_gates_percent, percent_aa_gates=other_gates_percent)
+        avg_diff_bennetts = np.average(diff_bennetts)
+        avg_diff_reduced = np.average(diff_reduced)
+        
+        print(f'For {percent_cc} input-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+
+        x_axis.append(percent_cc)
+        avg_bennetts.append(avg_diff_bennetts)
+        avg_reduced.append(avg_diff_reduced)
+
+    plot_variable_results_better(x_axis=x_axis, 
+                                 data_lists=[avg_bennetts, avg_reduced], 
+                                 data_labels=['Bennetts', 'Reduced'],
+                                 figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_cc',
+                                 image_write_path=img_path, 
+                                 title='Average Uncomputation Gates', 
+                                 xlabel='Percentage of Input-Input Gates',
+                                 ylabel='Average number of uncomp gates added', yfont=16,
+                                 legends=True)        
+
+    out_file.close()
+    
+
+def main():
+    # import yaml
+    config_file = 'eval_configs/config_gates_10q12a.yaml'
+    if len(sys.argv) == 2:
+        config_file = sys.argv[1]
+    
+    with open(config_file, 'r') as f:
+        data = yaml.load(f, Loader=yaml.SafeLoader)
+    
+        # Print the values as a dictionary
+    print(data)
+
+    if data['type'] == 'gates':
+        eval_var_gates(data)
+    elif data['type'] == 'ancilla':
+        eval_var_ancilla(data)
+    elif data['type'] == 'input':
+        eval_var_input(data)
+    elif data['type'] == 'cc':
+        eval_var_percent_cc(data)
+
+
+
 
 if __name__ == '__main__':
     main()

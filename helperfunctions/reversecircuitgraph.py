@@ -8,7 +8,7 @@ from qiskit import QuantumCircuit
 import rustworkx
 from tqdm import tqdm
 
-from .uncompfunctions import add_uncomputation_step
+from .uncompfunctions import add_uncomputation_step, remove_uncomputation_step
 from .constants import StringConstants, ListConstants
 from .graphhelper import CGNode, breakdown_qubit
 
@@ -266,7 +266,179 @@ def remove_nodes_not_in_bennetts(all_uncomp_graph:rustworkx.PyDiGraph, bennetts_
     
     # Remove nodes in reverse order to avoid index shifting
     for node_index in sorted(nodes_to_remove, reverse=True):
-        new_uncomp_graph.remove_node(node_index)
+        remove_uncomputation_step(new_uncomp_graph, node_index)
 
     return new_uncomp_graph
     
+
+def remove_input_nodes_until_required_breaking(circuit_graph:rustworkx.PyDiGraph):
+
+    uncomp_circuit_graph = copy.deepcopy(circuit_graph)
+
+    input_init_nodes = [node for node in uncomp_circuit_graph.nodes() if node.node_type == INIT and node.qubit_type is INPUT]
+    input_qubits = [node.label for node in input_init_nodes]
+
+    print('-----------------------------------------------------')
+
+    ancilla_init_nodes = [node for node in uncomp_circuit_graph.nodes() if node.node_type == INIT and node.qubit_type is ANCILLA]
+    ancilla_qubits = [node.label for node in ancilla_init_nodes]
+    ancilla_qubits_counter = collections.Counter(ancilla_qubits)
+    ancilla_qubits_counter.subtract(ancilla_qubits)
+    ancilla_target_nodes = {}
+    for node in ancilla_init_nodes:
+        qubit = node.label
+        targets = []
+        try:
+            target_node = uncomp_circuit_graph.find_adjacent_node_by_edge(node.get_index(), lambda x : x == TARGET)
+        except rustworkx.NoSuitableNeighbors:
+            target_node = None
+
+        while target_node:
+            targets.append(target_node)
+            try:
+                target_node = uncomp_circuit_graph.find_adjacent_node_by_edge(target_node.get_index(), lambda x : x == TARGET)
+            except:
+                target_node = None
+
+        targets.reverse()
+
+        ancilla_target_nodes.update({qubit:targets})
+        
+        # Algo: 
+        # For each "last target node" of ancilla, it has to be uncomp
+        # Get it's INPUT UNCOMP CONTROLS. 
+        # Mark the input uncomp as "important"
+        # After all the important input uncomp nodes have been marked, remove the others. 
+        #  
+
+    print(ancilla_target_nodes)
+    
+    important_input_node = {lab:None for lab in input_qubits}
+    print(important_input_node)
+    for anc, anc_targs in ancilla_target_nodes.items():
+        for t in anc_targs:
+            t_idx = t.get_index()
+            controls_idx = [x for x,y in uncomp_circuit_graph.adj_direction(t_idx, True).items() 
+                            if y == CONTROL and uncomp_circuit_graph.get_node_data(x).qubit_type == INPUT and uncomp_circuit_graph.get_node_data(x).node_type == UNCOMP] # Get all inbound uncomp control edges
+            print(t_idx, controls_idx)
+            for c in controls_idx:
+                c_node = uncomp_circuit_graph.get_node_data(c)
+                c_lab = c_node.label
+                if important_input_node[c_lab] is None or c_node.get_nodenum() < important_input_node[c_lab].get_nodenum():
+                    important_input_node[c_lab] = c_node
+
+    print(important_input_node)
+
+    changed_important_inputs = True
+    while changed_important_inputs:
+        changed_important_inputs = False
+        important_inputs = list(important_input_node.values())
+        print(important_inputs)
+        for node in important_inputs:
+            if node is None:
+                continue
+            c_idx = node.get_index()
+            controls_idx = [x for x,y in uncomp_circuit_graph.adj_direction(c_idx, True).items() 
+                            if y == CONTROL and uncomp_circuit_graph.get_node_data(x).qubit_type == INPUT and uncomp_circuit_graph.get_node_data(x).node_type == UNCOMP] # Get all inbound uncomp control edges
+            print(t_idx, controls_idx)
+            for c in controls_idx:
+                c_node = uncomp_circuit_graph.get_node_data(c)
+                c_lab = c_node.label
+                if important_input_node[c_lab] is None or c_node.get_nodenum() < important_input_node[c_lab].get_nodenum():
+                    important_input_node[c_lab] = c_node
+                    changed_important_inputs = True
+    
+    print(important_input_node)
+    
+    circuit_graph_nodes = list(rustworkx.topological_sort(uncomp_circuit_graph))
+    circuit_graph_nodes.reverse()
+    for node_idx in circuit_graph_nodes:
+        node = uncomp_circuit_graph.get_node_data(node_idx)
+        if node.qubit_type == INPUT and node.node_type == UNCOMP:
+            node_lab = node.label
+            best_node = important_input_node[node_lab]
+            if best_node is None or best_node.get_nodenum() > node.get_nodenum():
+                remove_uncomputation_step(uncomp_circuit_graph, node_idx)
+
+    uncomp_circuit_cycle = rustworkx.digraph_find_cycle(uncomp_circuit_graph)
+    assert len(uncomp_circuit_cycle) == 0, f'Found cycle in uncomp CG {uncomp_circuit_cycle}'
+    return uncomp_circuit_graph
+
+
+def mark_important_input_controls(node_idx:int, circuit_graph:rustworkx.PyDiGraph):
+    # Get incoming control and target edges
+    node_controls = [x for x,y in circuit_graph.adj_direction(node_idx, True).items() if y == CONTROL or y == TARGET]
+    # print(f'The node controls are {node_controls}')
+    for ctrl in node_controls:
+        node = circuit_graph.get_node_data(ctrl)
+        if not node.important_for_uncomp:
+            node.important_for_uncomp = True
+
+            # print(f'Marking Control Nodes for {circuit_graph.get_node_data(ctrl)}')
+            mark_important_input_controls(ctrl, circuit_graph)
+    
+
+
+def remove_input_nodes_until_required(circuit_graph: rustworkx.PyDiGraph):
+
+    uncomp_circuit_graph = copy.deepcopy(circuit_graph)
+    input_init_nodes = [node for node in uncomp_circuit_graph.nodes() if node.node_type == INIT and node.qubit_type is INPUT]
+    input_qubits = [node.label for node in input_init_nodes]
+    input_target_dict = {q:[] for q in input_qubits}
+    
+    for node in input_init_nodes:
+        try:
+            target_node = uncomp_circuit_graph.find_adjacent_node_by_edge(node.get_index(), lambda x: x == TARGET)
+        except rustworkx.NoSuitableNeighbors:
+            target_node = None
+
+        while target_node is not None:
+            input_target_dict[node.label].append(target_node)
+            try:
+                target_node = uncomp_circuit_graph.find_adjacent_node_by_edge(target_node.get_index(), lambda x: x == TARGET)
+            except rustworkx.NoSuitableNeighbors:
+                target_node = None
+        
+        input_target_dict[node.label].reverse()
+
+    print(input_target_dict)
+
+    ancilla_uncomp_nodes = [x for x in uncomp_circuit_graph.nodes() if x.qubit_type == ANCILLA and x.node_type == UNCOMP]
+    
+    for node in ancilla_uncomp_nodes:
+        node_idx = node.get_index()
+        node_controls = [x for x,y in circuit_graph.adj_direction(node_idx, True).items() if y == CONTROL]
+        print(node_controls)
+
+        mark_important_input_controls(node_idx, uncomp_circuit_graph)
+
+    for lab, target_list in input_target_dict.items():
+        print(f'{lab} : [{[(nd.simple_graph_label(), nd.important_for_uncomp) for nd in target_list]}]')
+
+    # for node_idx in circuit_graph_nodes:
+    #     node = uncomp_circuit_graph.get_node_data(node_idx)
+    #     if node.qubit_type == INPUT and node.node_type == UNCOMP:
+    nodes_to_remove = []
+
+    for node_lab, target_list in input_target_dict.items():
+        for node in target_list:
+            if node.node_type is COMP or node.important_for_uncomp:
+                print(f'Node {node.simple_graph_label()} is important for uncomp')
+                break
+            else:
+                print(f'Removing the node {node.simple_graph_label()}')
+                remove_uncomputation_step(uncomp_circuit_graph, node.get_index())
+                # nodes_to_remove.append(node.get_index())
+
+    
+    # circuit_graph_nodes = list(rustworkx.topological_sort(uncomp_circuit_graph))
+    # circuit_graph_nodes.reverse()
+    # print(circuit_graph_nodes)
+    
+    # for node in circuit_graph_nodes:
+    #     if node in nodes_to_remove:
+    #         # remove_uncomputation_step(uncomp_circuit_graph, node)
+    #         uncomp_circuit_graph.remove_node(node)
+
+    
+    return uncomp_circuit_graph

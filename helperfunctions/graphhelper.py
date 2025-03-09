@@ -28,6 +28,8 @@ class CGNode:
 
         self.uncomp_node_index = -1
 
+        self.important_for_uncomp = False
+
     def set_index(self, index):
         self.index = index
     def get_index(self):
@@ -51,7 +53,7 @@ class CGNode:
         return f"CGNode: Labeled {self.label} @ index: {self.index} of type {self.qubit_type} is a {self.node_type} node."
     
     def __repr__(self):
-        return f"CGNode: Labeled {self.label} @ index: {self.index} of type {self.qubit_type} is a {self.node_type} node.\n"
+        return f"\nCGNode: Labeled {self.label} @ index: {self.index} of type {self.qubit_type} is a {self.node_type} node."
     
     def __doc__(self):
         return f"CGNode: {self.qubit} @ index: {self.index}"
