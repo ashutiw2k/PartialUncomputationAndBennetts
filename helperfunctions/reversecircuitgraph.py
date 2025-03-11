@@ -43,7 +43,7 @@ def reverse_all_operations(circuit_graph : rustworkx.PyDiGraph):
     
     return uncomp_circuit_graph
 
-def uncomp_all_operations_using_circuitgraph(circuit_graph : rustworkx.PyDiGraph):
+def uncomp_all_operations_using_bennetts_in_circuitgraph(circuit_graph : rustworkx.PyDiGraph):
     uncomp_circuit_graph = copy.deepcopy(circuit_graph)
     nodelist = list(rustworkx.topological_sort(circuit_graph))
     nodelist.reverse()

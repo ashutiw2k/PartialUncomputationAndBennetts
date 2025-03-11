@@ -10,7 +10,7 @@ from rustworkx import digraph_find_cycle
 from qiskit import qpy
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_circuitgraph, remove_input_nodes_until_required
+from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_bennetts_in_circuitgraph, remove_input_nodes_until_required
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
@@ -62,7 +62,7 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
         i += 1
         
 
-        _all_full_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
+        _all_full_uncomp_circuit_graph = uncomp_all_operations_using_bennetts_in_circuitgraph(_computation_circuit_graph)
         _all_uncomp_circuit = get_uncomp_circuit(_all_full_uncomp_circuit_graph)
 
         # _reduced_uncomp_circuit_graph = remove_nodes_not_in_bennetts(_all_full_uncomp_circuit_graph, _bennetts_uncomp_reduced_circuit_graph, node_matcher)
@@ -135,8 +135,8 @@ def eval_var_gates(config_data):
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g_min}-{num_g_max}g',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
-                                 xlabel='Total number of computation gates',
-                                 ylabel='Average number of uncomp gates added', yfont=16,
+                                 xlabel='Total number of Computation Gates',
+                                 ylabel='Average Uncomputation Gates added', yfont=18,
                                  legends=True)        
 
     out_file.close()
@@ -282,9 +282,9 @@ def eval_var_percent_cc(config_data):
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_cc',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
-                                 xlabel='Percentage of Input-Input Gates',
-                                 ylabel='Average number of uncomp gates added', yfont=16,
-                                 legends=True)        
+                                 xlabel='Percentage of Total Gates acting on Data Qubits', xfont= 16,
+                                 ylabel='Average Uncomputation Gates added', yfont=18,
+                                 legends=False)        
 
     out_file.close()
     
@@ -333,9 +333,9 @@ def eval_var_percent_ca(config_data):
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_ca',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
-                                 xlabel='Percentage of Input-Ancilla Gates',
-                                 ylabel='Average number of uncomp gates added', yfont=16,
-                                 legends=True)        
+                                 xlabel='Percentage of Total Gates acting on Data-Ancilla', xfont=16,
+                                 ylabel='Average Uncomputation Gates added', yfont=18,
+                                 legends=False)        
 
     out_file.close()
      
@@ -383,9 +383,9 @@ def eval_var_percent_ac(config_data):
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_ac',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
-                                 xlabel='Percentage of Ancilla-Input Gates',
-                                 ylabel='Average number of uncomp gates added', yfont=16,
-                                 legends=True)        
+                                 xlabel='Percentage of Total Gates acting on Ancilla-Data', xfont=16,
+                                 ylabel='Average Uncomputation Gates added', yfont=18,
+                                 legends=False)        
 
     out_file.close()
     
@@ -434,9 +434,9 @@ def eval_var_percent_aa(config_data):
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_aa',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
-                                 xlabel='Percentage of Ancilla-Ancilla Gates',
-                                 ylabel='Average number of uncomp gates added', yfont=16,
-                                 legends=True)        
+                                 xlabel='Percentage of Total Gates acting on Ancillae Qubits', xfont=16,
+                                 ylabel='Average Uncomputation Gates added', yfont=18,
+                                 legends=False)        
 
     out_file.close()
 

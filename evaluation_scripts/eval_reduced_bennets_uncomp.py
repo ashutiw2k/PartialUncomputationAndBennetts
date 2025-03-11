@@ -8,7 +8,7 @@ import numpy as np
 from rustworkx import digraph_find_cycle
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_circuitgraph
+from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_bennetts_in_circuitgraph
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
@@ -43,7 +43,7 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
 
         # Uncomputation by adding all the gates/nodes to the CG        
         _computation_circuit_graph = get_computation_graph(_circuit, ancillae_list, outputs_list)
-        _all_full_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
+        _all_full_uncomp_circuit_graph = uncomp_all_operations_using_bennetts_in_circuitgraph(_computation_circuit_graph)
         _all_uncomp_circuit = get_uncomp_circuit(_all_full_uncomp_circuit_graph)
         
         # Uncomputation by just bennetts, no reordering but forcing to drop gates between inputs that occour after all ancillary uncomputation

@@ -8,7 +8,7 @@ import numpy as np
 from rustworkx import digraph_find_cycle
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import uncompute_input_nodes_greedy, uncomp_all_operations_using_circuitgraph
+from helperfunctions.reversecircuitgraph import uncompute_input_nodes_greedy, uncomp_all_operations_using_bennetts_in_circuitgraph
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
@@ -46,7 +46,7 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
         else:
             i += 1
         
-        _bennetts_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
+        _bennetts_uncomp_circuit_graph = uncomp_all_operations_using_bennetts_in_circuitgraph(_computation_circuit_graph)
         _greedy_input_uncomp_circuit_graph = uncompute_input_nodes_greedy(_ancillae_full_uncomp_circuit_graph)
 
         _bennetts_uncomp_circuit = get_uncomp_circuit(_bennetts_uncomp_circuit_graph)

@@ -678,8 +678,8 @@ def plot_beautiful_ancilla_results_better(x_axis, ex_uncomp_avg, gf_uncomp_avg, 
 def plot_variable_results_better(x_axis, data_lists, data_labels,  
                          figname='NEEDFIGNAME', image_write_path='NEEDIMAGEPATH',
                  title='Number of Ancillas Uncomputed', 
-                 xlabel = 'Total Number of Ancillas', xfont=24,
-                 ylabel = 'Average Ancillae Uncomputed', yfont=24,
+                 xlabel = 'Total Number of Ancillas', xfont=24, x_ticks = 20,
+                 ylabel = 'Average Ancillae Uncomputed', yfont=24, y_ticks = 20,
                  legends=False):
 
     fig, ax = plt.subplots(figsize=(8,6))
@@ -723,8 +723,8 @@ def plot_variable_results_better(x_axis, data_lists, data_labels,
         plt.legend(bbox_to_anchor=(0, 1.01, 1, 0.2), loc='lower left',
             ncol=5, mode="expand", borderaxespad=0, fontsize=9)    
     
-    plt.xticks(fontsize=24)
-    plt.yticks(fontsize=24)
+    plt.xticks(fontsize=x_ticks)
+    plt.yticks(fontsize=y_ticks)
 
 
     ax.set_xlabel(xlabel, fontsize=xfont)

@@ -7,9 +7,9 @@ num_g_min: 25
 num_g_max: 100
 num_g_step: 5
 
-percent_cc: 0.8
-percent_ca: 0.05
-percent_ac: 0.05
+percent_cc: 0.85
+percent_ca: 0.025
+percent_ac: 0.025
 percent_aa: 0.1
 
 fig_path: "no_git"
