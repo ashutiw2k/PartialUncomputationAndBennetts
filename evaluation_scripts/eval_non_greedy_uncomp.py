@@ -65,8 +65,8 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
         _all_full_uncomp_circuit_graph = uncomp_all_operations_using_circuitgraph(_computation_circuit_graph)
         _all_uncomp_circuit = get_uncomp_circuit(_all_full_uncomp_circuit_graph)
 
-        _reduced_uncomp_circuit_graph = remove_nodes_not_in_bennetts(_all_full_uncomp_circuit_graph, _bennetts_uncomp_reduced_circuit_graph, node_matcher)
-        _reduced_input_circuit_graph = remove_input_nodes_until_required(_reduced_uncomp_circuit_graph)
+        # _reduced_uncomp_circuit_graph = remove_nodes_not_in_bennetts(_all_full_uncomp_circuit_graph, _bennetts_uncomp_reduced_circuit_graph, node_matcher)
+        _reduced_input_circuit_graph = remove_input_nodes_until_required(_all_full_uncomp_circuit_graph)
         
         
         _reduced_input_uncomp_circuit = get_uncomp_circuit(_reduced_input_circuit_graph)

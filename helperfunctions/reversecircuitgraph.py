@@ -431,14 +431,4 @@ def remove_input_nodes_until_required(circuit_graph: rustworkx.PyDiGraph):
                 # nodes_to_remove.append(node.get_index())
 
     
-    # circuit_graph_nodes = list(rustworkx.topological_sort(uncomp_circuit_graph))
-    # circuit_graph_nodes.reverse()
-    # print(circuit_graph_nodes)
-    
-    # for node in circuit_graph_nodes:
-    #     if node in nodes_to_remove:
-    #         # remove_uncomputation_step(uncomp_circuit_graph, node)
-    #         uncomp_circuit_graph.remove_node(node)
-
-    
     return uncomp_circuit_graph
