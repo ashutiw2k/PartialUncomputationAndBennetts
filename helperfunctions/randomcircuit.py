@@ -430,7 +430,7 @@ def random_quantum_circuit_type_2(num_d=10, num_a=12, num_g=50,
     controls_dict = {q:list(circuit.qubits) for q in circuit.qubits}
     [controls_dict[q].remove(q) for q in circuit.qubits]
 
-    print(controls_dict)
+    # print(controls_dict)
 
     assert np.isclose(percent_aa_gates + percent_ad_gates + percent_da_gates + percent_dd_gates, 1)
 

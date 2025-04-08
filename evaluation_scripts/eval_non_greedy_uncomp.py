@@ -9,7 +9,7 @@ import yaml
 from rustworkx import digraph_find_cycle
 from qiskit import qpy
 
-from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
+from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit, random_quantum_circuit_type_2
 from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, uncomp_all_operations_using_bennetts_in_circuitgraph, remove_input_nodes_until_required, remove_and_reorder_circuit_gates_simple
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
@@ -36,13 +36,13 @@ def evaluation_function(num_exp = NUMBER_OF_EXP, circ_decompose=3,
 
     i = 0
     while i < num_exp:
-        _circuit, q,a,g = random_quantum_circuit_varied_percentages(
-            num_q=num_q, num_a=num_a, num_g=num_g, add_outputs=True, add_init=False,
-            percent_cc_gates=percent_cc_gates, percent_aa_gates=percent_aa_gates,
-            percent_ac_gates=percent_ac_gates, percent_ca_gates=percent_ca_gates)
+        _circuit, d,a,g = random_quantum_circuit_type_2(
+            num_d=num_q, num_a=num_a, num_g=num_g, add_outputs=True, add_init=False,
+            percent_dd_gates=percent_cc_gates, percent_aa_gates=percent_aa_gates,
+            percent_ad_gates=percent_ac_gates, percent_da_gates=percent_ca_gates)
         
         ancillae_list = get_qubits_of_circuit(_circuit, a, ANCILLA)
-        outputs_list = get_qubits_of_circuit(_circuit, q, OUTPUT) 
+        outputs_list = get_qubits_of_circuit(_circuit, d, OUTPUT) 
 
         with open('random_circuit.qpy', 'wb') as file:
             qpy.dump(_circuit, file)
@@ -73,7 +73,7 @@ def evaluation_function(num_exp = NUMBER_OF_EXP, circ_decompose=3,
         _reduced_input_circuit_graph = remove_input_nodes_until_required(_all_full_uncomp_circuit_graph)
         _reduced_input_uncomp_circuit = get_uncomp_circuit(_reduced_input_circuit_graph)
 
-        _reordered_reduced_input_circuit_graph = remove_and_reorder_circuit_gates_simple(_all_full_uncomp_circuit_graph)
+        _reordered_reduced_input_circuit_graph = remove_and_reorder_circuit_gates_simple(_reduced_input_circuit_graph)
         _reordered_reduced_input_uncomp_circuit = get_uncomp_circuit(_reordered_reduced_input_circuit_graph)
 
 
