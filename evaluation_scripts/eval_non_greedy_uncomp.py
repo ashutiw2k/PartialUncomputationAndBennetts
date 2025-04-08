@@ -10,7 +10,7 @@ from rustworkx import digraph_find_cycle
 from qiskit import qpy
 
 from helperfunctions.randomcircuit import random_quantum_circuit_varied_percentages, get_qubits_of_circuit
-from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, remove_nodes_not_in_bennetts, uncomp_all_operations_using_bennetts_in_circuitgraph, remove_input_nodes_until_required
+from helperfunctions.reversecircuitgraph import get_bennetts_reduced_uncomp_without_reordering, uncomp_all_operations_using_bennetts_in_circuitgraph, remove_input_nodes_until_required, remove_and_reorder_circuit_gates_simple
 from helperfunctions.uncompfunctions import add_uncomputation
 from helperfunctions.evaluation import plot_variable_results_better
 from helperfunctions.circuitgraphfunctions import get_computation_graph, get_uncomp_circuit
@@ -22,13 +22,17 @@ INPUT = StringConstants.INPUT.value
 ANCILLA = StringConstants.ANCILLA.value
 OUTPUT = StringConstants.OUTPUT.value
 
-def evaluation_function(num_exp = 10, circ_decompose=3,
+NUMBER_OF_EXP = 20
+
+def evaluation_function(num_exp = NUMBER_OF_EXP, circ_decompose=3,
                num_q = 12, num_a = 10, num_g=50,
                percent_cc_gates = 0.8, percent_aa_gates = 0.1,
                percent_ca_gates = 0.05, percent_ac_gates = 0.05):
     
     diff_bennetts_uncomp_gates = []
-    diff_greedy_uncomp_gates = []
+    diff_reduced_uncomp_gates = []
+    diff_reordered_uncomp_gates = []
+    
 
     i = 0
     while i < num_exp:
@@ -67,36 +71,45 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
 
         # _reduced_uncomp_circuit_graph = remove_nodes_not_in_bennetts(_all_full_uncomp_circuit_graph, _bennetts_uncomp_reduced_circuit_graph, node_matcher)
         _reduced_input_circuit_graph = remove_input_nodes_until_required(_all_full_uncomp_circuit_graph)
-        
-        
         _reduced_input_uncomp_circuit = get_uncomp_circuit(_reduced_input_circuit_graph)
+
+        _reordered_reduced_input_circuit_graph = remove_and_reorder_circuit_gates_simple(_all_full_uncomp_circuit_graph)
+        _reordered_reduced_input_uncomp_circuit = get_uncomp_circuit(_reordered_reduced_input_circuit_graph)
+
 
         if circ_decompose:
             _circuit_gate_num = sum(_circuit.decompose(reps=circ_decompose).count_ops().values())
             _bennetts_uncomp_num = sum(_all_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
-            _greedy_input_uncomp_num = sum(_reduced_input_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
+            _reduced_input_uncomp_num = sum(_reduced_input_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
+            _reordered_reduced_input_uncomp_num = sum(_reordered_reduced_input_uncomp_circuit.decompose(reps=circ_decompose).count_ops().values())
+            
 
         else:
             _circuit_gate_num = sum(_circuit.count_ops().values())
             _bennetts_uncomp_num = sum(_all_uncomp_circuit.count_ops().values())
-            _greedy_input_uncomp_num = sum(_reduced_input_uncomp_circuit.count_ops().values())
+            _reduced_input_uncomp_num = sum(_reduced_input_uncomp_circuit.count_ops().values())            
+            _reordered_reduced_input_uncomp_num = sum(_reordered_reduced_input_uncomp_circuit.count_ops().values())
 
         _bennetts_diff = _bennetts_uncomp_num - _circuit_gate_num
-        _greedy_diff = _greedy_input_uncomp_num - _circuit_gate_num
+        _reduced_diff = _reduced_input_uncomp_num - _circuit_gate_num
+        _reordered_diff = _reordered_reduced_input_uncomp_num - _circuit_gate_num
 
         print(f'Bennetts Uncomp introduces {_bennetts_diff} gates to the circuit')
-        print(f'Greedy Input Uncomp introduces {_greedy_diff} gates to the circuit')
+        print(f'Reduced Input Uncomp introduces {_reduced_diff} gates to the circuit')
+        print(f'Reordered Reduced Input Uncomp introduces {_reordered_diff} gates to the circuit')
 
         diff_bennetts_uncomp_gates.append(_bennetts_diff)
-        diff_greedy_uncomp_gates.append(_greedy_diff)
+        diff_reduced_uncomp_gates.append(_reduced_diff)
+        diff_reordered_uncomp_gates.append(_reordered_diff)
 
     
-    return diff_bennetts_uncomp_gates, diff_greedy_uncomp_gates
+    return diff_bennetts_uncomp_gates, diff_reduced_uncomp_gates, diff_reordered_uncomp_gates
 
 def eval_var_gates(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
 
@@ -116,22 +129,24 @@ def eval_var_gates(config_data):
     
 
     for num_gates in range(num_g_min, num_g_max+num_g_step, num_g_step):
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered = evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_gates, circ_decompose=0,
                                                          percent_cc_gates=percent_cc, percent_ca_gates=percent_ca, 
                                                          percent_ac_gates=percent_ac, percent_aa_gates=percent_aa)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
         
-        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {num_gates} gates, Bennetts added {avg_diff_bennetts}, Reduced Inputs added {(avg_diff_reduced)}, Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(num_gates)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_reduced], 
-                                 data_labels=['Bennetts', 'Reduced'],
+                                 data_lists=[avg_bennetts, avg_reduced, avg_reordered], 
+                                 data_labels=['Bennetts', 'Reduced', 'Reordered'],
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g_min}-{num_g_max}g',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
@@ -145,6 +160,7 @@ def eval_var_ancilla(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
 
@@ -164,18 +180,21 @@ def eval_var_ancilla(config_data):
     
 
     for num_a in range(num_a_min, num_a_max+num_a_step, num_a_step):
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered = evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
                                                          percent_cc_gates=percent_cc, percent_ca_gates=percent_ca, 
                                                          percent_ac_gates=percent_ac, percent_aa_gates=percent_aa)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
+    
         
-        print(f'For {num_a} ancillae, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {num_a} ancillae, Bennetts added {avg_diff_bennetts}, Reduced Inputs added {(avg_diff_reduced)}, Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(num_a)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
 
     plot_variable_results_better(x_axis=x_axis, 
                                  data_lists=[avg_bennetts, avg_reduced], 
@@ -193,6 +212,7 @@ def eval_var_input(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
 
@@ -212,22 +232,24 @@ def eval_var_input(config_data):
     
 
     for num_i in range(num_i_min, num_i_max+num_i_step, num_i_step):
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered = evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
                                                          percent_cc_gates=percent_cc, percent_ca_gates=percent_ca, 
                                                          percent_ac_gates=percent_ac, percent_aa_gates=percent_aa)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
         
-        print(f'For {num_i} input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {num_i} input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {avg_diff_reduced}, , Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(num_i)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_reduced], 
-                                 data_labels=['Bennetts', 'Reduced'],
+                                 data_lists=[avg_bennetts, avg_reduced, avg_reordered], 
+                                 data_labels=['Bennetts', 'Reduced', 'Reordered'],
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i_min}-{num_i_max}q_{num_a}a_{num_g}g',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
@@ -242,6 +264,7 @@ def eval_var_percent_cc(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
     
@@ -263,28 +286,32 @@ def eval_var_percent_cc(config_data):
 
         percent_cc = percent/100
 
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered = evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
                                                          percent_cc_gates=percent_cc, percent_ca_gates=other_gates_percent, 
                                                          percent_ac_gates=other_gates_percent, percent_aa_gates=other_gates_percent)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
         
-        print(f'For {percent_cc} input-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {percent_cc} input-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}, Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(percent)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
+
+    # print(len(x_axis), len(avg_bennetts), len(avg_reduced), len(avg_reordered))
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_reduced], 
-                                 data_labels=['Bennetts', 'Reduced'],
+                                 data_lists=[avg_bennetts, avg_reduced, avg_reordered], 
+                                 data_labels=['Bennetts', 'Reduced', 'Reordered'],
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_cc',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Percentage of Total Gates acting on Data Qubits', xfont= 16,
                                  ylabel='Average Uncomputation Gates added', yfont=18,
-                                 legends=False)        
+                                 legends=True)        
 
     out_file.close()
     
@@ -293,6 +320,7 @@ def eval_var_percent_ca(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
     
@@ -314,28 +342,30 @@ def eval_var_percent_ca(config_data):
 
         percent_ca = percent/100
 
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered = evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
                                                          percent_cc_gates=other_gates_percent, percent_ca_gates=percent_ca, 
                                                          percent_ac_gates=other_gates_percent, percent_aa_gates=other_gates_percent)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
         
-        print(f'For {percent_ca} input-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {percent_ca} input-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {avg_diff_reduced}, Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(percent)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_reduced], 
-                                 data_labels=['Bennetts', 'Reduced'],
+                                 data_lists=[avg_bennetts, avg_reduced, avg_reordered], 
+                                 data_labels=['Bennetts', 'Reduced', 'Reordered'],
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_ca',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Percentage of Total Gates acting on Data-Ancilla', xfont=16,
                                  ylabel='Average Uncomputation Gates added', yfont=18,
-                                 legends=False)        
+                                 legends=True)        
 
     out_file.close()
      
@@ -343,6 +373,7 @@ def eval_var_percent_ac(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
     
@@ -364,28 +395,30 @@ def eval_var_percent_ac(config_data):
 
         percent_ac = percent/100
 
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered = evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
                                                          percent_cc_gates=other_gates_percent, percent_ca_gates=other_gates_percent, 
                                                          percent_ac_gates=percent_ac, percent_aa_gates=other_gates_percent)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
         
-        print(f'For {percent_ac} ancilla-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {percent_ac} ancilla-input, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}, Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(percent)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_reduced], 
-                                 data_labels=['Bennetts', 'Reduced'],
+                                 data_lists=[avg_bennetts, avg_reduced, avg_reordered], 
+                                 data_labels=['Bennetts', 'Reduced', 'Reordered'],
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_ac',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Percentage of Total Gates acting on Ancilla-Data', xfont=16,
                                  ylabel='Average Uncomputation Gates added', yfont=18,
-                                 legends=False)        
+                                 legends=True)        
 
     out_file.close()
     
@@ -394,6 +427,7 @@ def eval_var_percent_aa(config_data):
         
     avg_bennetts = []
     avg_reduced = []
+    avg_reordered = []
     x_axis = []
     out_file = open('eval_logs.txt', 'w')
     
@@ -415,28 +449,30 @@ def eval_var_percent_aa(config_data):
 
         percent_aa = percent/100
 
-        diff_bennetts, diff_reduced = evaluation_function(num_exp=10, 
+        diff_bennetts, diff_reduced, diff_reordered= evaluation_function(num_exp=NUMBER_OF_EXP, 
                                                          num_q=num_i, num_a=num_a, num_g=num_g, circ_decompose=0,
                                                          percent_cc_gates=other_gates_percent, percent_ca_gates=other_gates_percent, 
                                                          percent_ac_gates=other_gates_percent, percent_aa_gates=percent_aa)
-        avg_diff_bennetts = np.average(diff_bennetts)
-        avg_diff_reduced = np.average(diff_reduced)
+        avg_diff_bennetts = np.ceil(np.average(diff_bennetts))
+        avg_diff_reduced = np.floor(np.average(diff_reduced))
+        avg_diff_reordered = np.floor(np.average(diff_reordered))
         
-        print(f'For {percent_aa} ancilla-ancilla, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {np.average(avg_diff_reduced)}', file=out_file)
+        print(f'For {percent_aa} ancilla-ancilla, Bennetts added {avg_diff_bennetts} and Reduced Inputs added {avg_diff_reduced}, Reordered Inputs added {(avg_diff_reordered)}', file=out_file)
 
         x_axis.append(percent)
         avg_bennetts.append(avg_diff_bennetts)
         avg_reduced.append(avg_diff_reduced)
+        avg_reordered.append(avg_diff_reordered)
 
     plot_variable_results_better(x_axis=x_axis, 
-                                 data_lists=[avg_bennetts, avg_reduced], 
-                                 data_labels=['Bennetts', 'Reduced'],
+                                data_lists=[avg_bennetts, avg_reduced, avg_reordered], 
+                                data_labels=['Bennetts', 'Reduced', 'Reordered'],
                                  figname=f'Plot_Bennetts_Reduced_Input_{num_i}q_{num_a}a_{num_g}g_var_percent_aa',
                                  image_write_path=img_path, 
                                  title='Average Uncomputation Gates', 
                                  xlabel='Percentage of Total Gates acting on Ancillae Qubits', xfont=16,
                                  ylabel='Average Uncomputation Gates added', yfont=18,
-                                 legends=False)        
+                                 legends=True)        
 
     out_file.close()
 
