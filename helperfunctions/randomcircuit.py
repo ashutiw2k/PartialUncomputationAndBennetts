@@ -280,14 +280,14 @@ def random_quantum_circuit_large_with_params(num_q=5, num_a=5, num_g=25,
     
     return circuit, num_q, num_a, num_g
 
-def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50, 
+def random_quantum_circuit_varied_percentages(num_d=10, num_a=12, num_g=50, 
                                             add_init = True,  
                                             add_outputs = False,
                                             add_random_h = False,
-                                            percent_cc_gates = 0.8,
+                                            percent_dd_gates = 0.8,
                                             percent_aa_gates = 0.1,
-                                            percent_ca_gates = 0.05,
-                                            percent_ac_gates = 0.05,
+                                            percent_da_gates = 0.05,
+                                            percent_ad_gates = 0.05,
                                             percent_add_h = 0.5) -> tuple[QuantumCircuit,int,int,int]:
     
     # num_q = random.randint(3,10)
@@ -304,11 +304,11 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
     ac_gates = 0
     aa_gates = 0
     
-    in_q = QuantumRegister(num_q, name='iq')
+    in_q = QuantumRegister(num_d, name='iq')
     an_q = QuantumRegister(num_a, name='aq')
 
     if add_outputs:
-        ot_q = QuantumRegister(num_q, name='oq')
+        ot_q = QuantumRegister(num_d, name='oq')
         circuit = QuantumCircuit(in_q, ot_q, an_q)
     else:
         circuit = QuantumCircuit(in_q, an_q)
@@ -321,11 +321,11 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
     rng = np.random.default_rng()
     gate_dist = rng.random(size=num_g)
 
-    for change_target_controls in tqdm(gate_dist, desc=f'Building Random Quantum Circuit with {num_q}q, {num_a}a, {num_g}g'):
+    for change_target_controls in tqdm(gate_dist, desc=f'Building Random Quantum Circuit with {num_d}q, {num_a}a, {num_g}g'):
 
         if add_random_h:
             if random.random() > percent_add_h:
-                wires = random.sample(list(in_q), random.randrange(num_q))
+                wires = random.sample(list(in_q), random.randrange(num_d))
                 for w in wires:
                     circuit.h(w)
                     
@@ -335,17 +335,17 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
         control_q = in_q
         target_q = in_q
 
-        if change_target_controls < percent_cc_gates:
+        if change_target_controls < percent_dd_gates:
             control_q = in_q
             target_q = in_q
             cc_gates += 1
 
-        elif change_target_controls < percent_cc_gates + percent_ca_gates:
+        elif change_target_controls < percent_dd_gates + percent_da_gates:
             control_q = in_q
             target_q = an_q
             ca_gates += 1
 
-        elif change_target_controls < percent_cc_gates + percent_ca_gates + percent_ac_gates:
+        elif change_target_controls < percent_dd_gates + percent_da_gates + percent_ad_gates:
             control_q = an_q
             target_q = in_q
             ac_gates += 1
@@ -372,14 +372,14 @@ def random_quantum_circuit_varied_percentages(num_q=10, num_a=12, num_g=50,
         # print(num_controls, controls, target)
         circuit.mcx([control_q[cq] for cq in controls],target_q[target]) 
 
-    logger.info(f'Built circuit with {num_q} input, {num_a} ancilla and {num_g} gates.')
+    logger.info(f'Built circuit with {num_d} input, {num_a} ancilla and {num_g} gates.')
     logger.info(f'There are {hc_gates} H gates acting on the control qubits, {cc_gates} gates acting between control qubits, {ca_gates} gates acting between control and ancilla, {ac_gates} gates acting between ancilla and control and {aa_gates} gates acting between just the ancillas.')
     
     if add_outputs:
-        for i in range(num_q):
+        for i in range(num_d):
             circuit.cx(in_q[i], ot_q[i])
         
-    return circuit, num_q, num_a, num_g
+    return circuit, num_d, num_a, num_g
 
 
 def random_quantum_circuit_type_2(num_d=10, num_a=12, num_g=50, 
@@ -427,8 +427,8 @@ def random_quantum_circuit_type_2(num_d=10, num_a=12, num_g=50,
     
     rng = np.random.default_rng()
     gate_dist = rng.random(size=num_g)
-    controls_dict = {q:list(circuit.qubits) for q in circuit.qubits}
-    [controls_dict[q].remove(q) for q in circuit.qubits]
+    controls_dict = {q:list(filter(lambda x: x in da_q or x in an_q, circuit.qubits)) for q in circuit.qubits if q in da_q or q in an_q}
+    [controls_dict[q].remove(q) for q in controls_dict.keys()]
 
     # print(controls_dict)
 
@@ -487,12 +487,21 @@ def random_quantum_circuit_type_2(num_d=10, num_a=12, num_g=50,
 
         target = random.choice(target_q)
         valid_controls = controls_dict[target]
+        if target in valid_controls:
+            print('ERROR - Target in it\'s own control list')
         control = random.choice(valid_controls)
 
+        # print(f"{breakdown_qubit(control)['label']} o---> {breakdown_qubit(target)['label']}", end=' ') 
+        
         if control_q != target_q:
-            controls_dict[control].remove(target)
+            try:
+                controls_dict[control].remove(target)
+            except ValueError:
+                pass
 
         circuit.cx(control, target)
+
+        # print(f"| {[breakdown_qubit(q)['label'] for q in valid_controls]}")
 
     logger.info(f'Built circuit with {num_d} input, {num_a} ancilla and {num_g} gates.')
     logger.info(f'There are {hc_gates} H gates acting on the control qubits, {dd_gates} gates acting between control qubits, {da_gates} gates acting between control and ancilla, {ad_gates} gates acting between ancilla and control and {aa_gates} gates acting between just the ancillas.')

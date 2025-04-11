@@ -36,7 +36,7 @@ def evaluation_function(num_exp = NUMBER_OF_EXP, circ_decompose=3,
 
     i = 0
     while i < num_exp:
-        _circuit, d,a,g = random_quantum_circuit_type_2(
+        _circuit, d,a,g = random_quantum_circuit_varied_percentages(
             num_d=num_q, num_a=num_a, num_g=num_g, add_outputs=True, add_init=False,
             percent_dd_gates=percent_cc_gates, percent_aa_gates=percent_aa_gates,
             percent_ad_gates=percent_ac_gates, percent_da_gates=percent_ca_gates)
@@ -46,6 +46,8 @@ def evaluation_function(num_exp = NUMBER_OF_EXP, circ_decompose=3,
 
         with open('random_circuit.qpy', 'wb') as file:
             qpy.dump(_circuit, file)
+
+        # print(_circuit.draw())
 
 
         _computation_circuit_graph = get_computation_graph(_circuit, ancillae_list, outputs_list)

@@ -31,9 +31,9 @@ def evaluation_function(num_exp = 10, circ_decompose=3,
     i = 0
     while i < num_exp:
         _circuit, q,a,g = random_quantum_circuit_varied_percentages(
-            num_q=num_q, num_a=num_a, num_g=num_g, add_outputs=True, add_init=False,
-            percent_cc_gates=percent_cc_gates, percent_aa_gates=percent_aa_gates,
-            percent_ac_gates=percent_ac_gates, percent_ca_gates=percent_ca_gates)
+            num_d=num_q, num_a=num_a, num_g=num_g, add_outputs=True, add_init=False,
+            percent_dd_gates=percent_cc_gates, percent_aa_gates=percent_aa_gates,
+            percent_ad_gates=percent_ac_gates, percent_da_gates=percent_ca_gates)
         
         ancillae_list = get_qubits_of_circuit(_circuit, a, ANCILLA)
         outputs_list = get_qubits_of_circuit(_circuit, q, OUTPUT) 

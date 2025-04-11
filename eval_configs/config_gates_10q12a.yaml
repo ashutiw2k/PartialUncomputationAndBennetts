@@ -12,6 +12,6 @@ percent_ca: 0.05
 percent_ac: 0.05
 percent_aa: 0.1
 
-fig_path: "no_git"
+fig_path: "test_plots"
 
 

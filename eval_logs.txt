@@ -1,0 +1,11 @@
+For 0.0 input-input, Bennetts added 50.0 and Reduced Inputs added 47.0, Reordered Inputs added 47.0
+For 0.1 input-input, Bennetts added 50.0 and Reduced Inputs added 47.0, Reordered Inputs added 47.0
+For 0.2 input-input, Bennetts added 50.0 and Reduced Inputs added 46.0, Reordered Inputs added 46.0
+For 0.3 input-input, Bennetts added 50.0 and Reduced Inputs added 45.0, Reordered Inputs added 45.0
+For 0.4 input-input, Bennetts added 50.0 and Reduced Inputs added 45.0, Reordered Inputs added 45.0
+For 0.5 input-input, Bennetts added 50.0 and Reduced Inputs added 43.0, Reordered Inputs added 43.0
+For 0.6 input-input, Bennetts added 50.0 and Reduced Inputs added 39.0, Reordered Inputs added 39.0
+For 0.7 input-input, Bennetts added 50.0 and Reduced Inputs added 39.0, Reordered Inputs added 39.0
+For 0.8 input-input, Bennetts added 50.0 and Reduced Inputs added 38.0, Reordered Inputs added 37.0
+For 0.9 input-input, Bennetts added 50.0 and Reduced Inputs added 22.0, Reordered Inputs added 21.0
+For 1.0 input-input, Bennetts added 50.0 and Reduced Inputs added 0.0, Reordered Inputs added 0.0
