@@ -1,11 +1,16 @@
-For 0.0 input-input, Bennetts added 50.0 and Reduced Inputs added 47.0, Reordered Inputs added 47.0
-For 0.1 input-input, Bennetts added 50.0 and Reduced Inputs added 47.0, Reordered Inputs added 47.0
-For 0.2 input-input, Bennetts added 50.0 and Reduced Inputs added 46.0, Reordered Inputs added 46.0
-For 0.3 input-input, Bennetts added 50.0 and Reduced Inputs added 45.0, Reordered Inputs added 45.0
-For 0.4 input-input, Bennetts added 50.0 and Reduced Inputs added 45.0, Reordered Inputs added 45.0
-For 0.5 input-input, Bennetts added 50.0 and Reduced Inputs added 43.0, Reordered Inputs added 43.0
-For 0.6 input-input, Bennetts added 50.0 and Reduced Inputs added 39.0, Reordered Inputs added 39.0
-For 0.7 input-input, Bennetts added 50.0 and Reduced Inputs added 39.0, Reordered Inputs added 39.0
-For 0.8 input-input, Bennetts added 50.0 and Reduced Inputs added 38.0, Reordered Inputs added 37.0
-For 0.9 input-input, Bennetts added 50.0 and Reduced Inputs added 22.0, Reordered Inputs added 21.0
-For 1.0 input-input, Bennetts added 50.0 and Reduced Inputs added 0.0, Reordered Inputs added 0.0
+For 25 gates, Bennetts added 25.0, Reduced Inputs added 12.0, Reordered Inputs added 12.0
+For 30 gates, Bennetts added 30.0, Reduced Inputs added 16.0, Reordered Inputs added 16.0
+For 35 gates, Bennetts added 35.0, Reduced Inputs added 21.0, Reordered Inputs added 20.0
+For 40 gates, Bennetts added 40.0, Reduced Inputs added 20.0, Reordered Inputs added 20.0
+For 45 gates, Bennetts added 45.0, Reduced Inputs added 32.0, Reordered Inputs added 32.0
+For 50 gates, Bennetts added 50.0, Reduced Inputs added 30.0, Reordered Inputs added 30.0
+For 55 gates, Bennetts added 55.0, Reduced Inputs added 37.0, Reordered Inputs added 37.0
+For 60 gates, Bennetts added 60.0, Reduced Inputs added 47.0, Reordered Inputs added 47.0
+For 65 gates, Bennetts added 65.0, Reduced Inputs added 51.0, Reordered Inputs added 51.0
+For 70 gates, Bennetts added 70.0, Reduced Inputs added 53.0, Reordered Inputs added 53.0
+For 75 gates, Bennetts added 75.0, Reduced Inputs added 55.0, Reordered Inputs added 55.0
+For 80 gates, Bennetts added 80.0, Reduced Inputs added 62.0, Reordered Inputs added 62.0
+For 85 gates, Bennetts added 85.0, Reduced Inputs added 64.0, Reordered Inputs added 64.0
+For 90 gates, Bennetts added 90.0, Reduced Inputs added 73.0, Reordered Inputs added 73.0
+For 95 gates, Bennetts added 95.0, Reduced Inputs added 74.0, Reordered Inputs added 74.0
+For 100 gates, Bennetts added 100.0, Reduced Inputs added 80.0, Reordered Inputs added 80.0
