@@ -435,6 +435,10 @@ def remove_input_nodes_until_required(circuit_graph: rustworkx.PyDiGraph):
 
 
 def remove_and_reorder_circuit_gates_simple(bennetts_circuit_graph:rustworkx.PyDiGraph):
+    '''
+    CG'' --> CG'
+    Can/Will introduce "temporary" cycles in the CG which will then claim that nodes of the CG can not be removed. 
+    '''
     # We should not be needing the cyclic circuit graph
 
     bennetts_circuit_graph = copy.deepcopy(bennetts_circuit_graph)
@@ -464,31 +468,12 @@ def remove_and_reorder_circuit_gates_simple(bennetts_circuit_graph:rustworkx.PyD
     return bennetts_circuit_graph  
 
 
-def remove_and_reorder_circuit_gates_complex(bennetts_circuit_graph:rustworkx.PyDiGraph):
-    # We should not be needing the cyclic circuit graph
+def add_uncomp_gates_for_input(bennetts_circuit_graph:rustworkx.PyDiGraph, cyclic_circuit_graph:rustworkx.PyDiGraph):
+    '''
+    Try for CG' --> CG''
+    Add nodes to cyclic CG until acyclicity is achieved. 
+    '''
 
-    bennetts_circuit_graph = copy.deepcopy(bennetts_circuit_graph)
-    
-    bennetts_nodes = list(bennetts_circuit_graph.node_indices())
-    bennetts_nodes.reverse()
 
-    bennetts_uncomp_copy = copy.deepcopy(bennetts_circuit_graph)
-
-    cyclic_qubits = []
-
-    for idx in bennetts_nodes:
-        node = bennetts_circuit_graph.get_node_data(idx)
-        if node.qubit_type == INPUT and node.node_type == UNCOMP and node.qubit_name not in cyclic_qubits:
-            # print(node.simple_graph_label())
-            remove_uncomputation_step(bennetts_uncomp_copy, idx)
-
-            if rustworkx.digraph_find_cycle(bennetts_uncomp_copy):
-                cyclic_qubits.append(node.qubit_name)  
-                bennetts_uncomp_copy = copy.deepcopy(bennetts_circuit_graph)
-                
-            else:
-                remove_uncomputation_step(bennetts_circuit_graph, idx)
-
-    assert len(rustworkx.digraph_find_cycle(bennetts_circuit_graph)) == 0
 
     return bennetts_circuit_graph  
