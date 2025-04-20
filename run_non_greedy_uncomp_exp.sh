@@ -7,7 +7,7 @@ VENV_PATH=".venv"
 # Paths to your script and config folders
 # Update these paths based on your project structure
 SCRIPTS_DIR="./evaluation_scripts"
-SCRIPT="eval_non_greedy_uncomp.py"
+SCRIPT="eval_non_greedy_uncomp_both_reordering.py"
 CONFIG_DIR="./eval_configs"
 
 # Activate the virtual environment

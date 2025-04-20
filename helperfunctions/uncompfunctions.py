@@ -39,11 +39,11 @@ def get_uncomp_node_index(circuit_graph: rustworkx.PyDiGraph, node_index):
 
 # This method is to reverse Lines 10,11 of the PLDI algorithm
 # If we remove uncomp node, and node acts as a control, replace with ctrl* with ctrl
-def get_comp_node_index(circuit_graph: rustworkx.PyDiGraph, node_index):
+def get_comp_node_index(circuit_graph: rustworkx.PyDiGraph, node_index, plus_nodenum=0):
     for node in circuit_graph.nodes():
         if node.node_type is not UNCOMP \
             and node.label == circuit_graph.get_node_data(node_index).label \
-            and node.get_nodenum() == circuit_graph.get_node_data(node_index).get_nodenum():
+            and node.get_nodenum() == circuit_graph.get_node_data(node_index).get_nodenum() + plus_nodenum:
 
             return node.get_index()
     return node_index

@@ -65,6 +65,14 @@ class CGNode:
     def simple_graph_label(self):
         return f'{self.opname}:{self.label}({self.node_num}{"*" if self.node_type is UNCOMP else ""})' if self.opname else self.label
 
+
+def get_simple_labels(node_list):
+    return [node.simple_graph_label() for node in node_list]
+
+def is_same_node(node1, node2):
+    if isinstance(node1, CGNode) and isinstance(node2, CGNode):
+        return node1.label == node2.label and node1.qubit_type == node2.qubit_type and node1.node_type == node2.node_type and node1.node_num == node2.node_num and node1.opname == node2.opname
+    return False
     
 def breakdown_qubit(qubit: qiskit.circuit.Qubit):
     return {'name':qubit._register.name, 'wire':qubit._index, 'qubit':qubit, 'label':qubit._register.name+str(qubit._index)}

@@ -8,9 +8,9 @@ from qiskit import QuantumCircuit
 import rustworkx
 from tqdm import tqdm
 
-from .uncompfunctions import add_uncomputation_step, remove_uncomputation_step
+from .uncompfunctions import add_uncomputation_step, remove_uncomputation_step, get_comp_node_index
 from .constants import StringConstants, ListConstants
-from .graphhelper import CGNode, breakdown_qubit
+from .graphhelper import CGNode, breakdown_qubit, get_simple_labels
 
 INPUT = StringConstants.INPUT.value
 ANCILLA = StringConstants.ANCILLA.value
@@ -72,8 +72,8 @@ def add_uncomp_input_node(node_index: int, circuit_graph:rustworkx.PyDiGraph):
     '''
 
     comp_node = circuit_graph.get_node_data(node_index)
-    assert comp_node.node_type is COMP, f"Node is not {COMP} node." 
-    assert comp_node.qubit_type is INPUT, f"Node is not {INPUT} node."
+    assert comp_node.node_type is COMP, f"{comp_node.simple_graph_label()} Node is not {COMP} node." 
+    assert comp_node.qubit_type is INPUT, f"{comp_node.simple_graph_label()} Node is not {INPUT} node."
 
 
     node_num = comp_node.get_nodenum()
@@ -468,12 +468,33 @@ def remove_and_reorder_circuit_gates_simple(bennetts_circuit_graph:rustworkx.PyD
     return bennetts_circuit_graph  
 
 
-def add_uncomp_gates_for_input(bennetts_circuit_graph:rustworkx.PyDiGraph, cyclic_circuit_graph:rustworkx.PyDiGraph):
+def add_and_reorder_circuit_gates(reduced_circuit_graph:rustworkx.PyDiGraph, cyclic_circuit_graph:rustworkx.PyDiGraph):
     '''
     Try for CG' --> CG''
     Add nodes to cyclic CG until acyclicity is achieved. 
     '''
 
+    reduced_input_uncomp_nodes_sorted = list(filter(
+        lambda node: node.node_type == UNCOMP and node.qubit_type == INPUT,
+        [reduced_circuit_graph.get_node_data(i) for i in rustworkx.topological_sort(reduced_circuit_graph)]
+    ))
+    cyclic_cg_copy = copy.deepcopy(cyclic_circuit_graph)
+    cyclic_nodes = cyclic_circuit_graph.nodes()
+    unique_nodes = [node for node in reduced_input_uncomp_nodes_sorted if node not in cyclic_nodes]
+    
+    print(get_simple_labels(reduced_input_uncomp_nodes_sorted))
+    print(get_simple_labels(cyclic_nodes))
+    print(get_simple_labels(unique_nodes))
+    # [add_input_uncomp_nodes(node, cyclic_circuit_graph) for node in reduced_input_uncomp_nodes_sorted]
+    # while rustworkx.digraph_find_cycle(cyclic_cg_copy):
+    for node in reduced_input_uncomp_nodes_sorted:
+        if rustworkx.digraph_find_cycle(cyclic_cg_copy):
+            print(f'Adding Uncomp Node {node.simple_graph_label()}')
+            comp_node_index = get_comp_node_index(reduced_circuit_graph, node.index, plus_nodenum=1)
+
+            cyclic_cg_copy = add_uncomp_input_node(comp_node_index, cyclic_cg_copy)
+        else:
+            break
 
 
-    return bennetts_circuit_graph  
+    return cyclic_cg_copy  
