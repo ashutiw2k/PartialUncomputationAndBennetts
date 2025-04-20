@@ -114,7 +114,7 @@ def evaluation_function(num_exp = NUMBER_OF_EXP, circ_decompose=3,
         diff_reordered_2_uncomp_gates.append(_reordered_diff_2)
 
     
-    return diff_bennetts_uncomp_gates, diff_reduced_uncomp_gates, diff_reordered_2_uncomp_gates, diff_reordered_2_uncomp_gates
+    return diff_bennetts_uncomp_gates, diff_reduced_uncomp_gates, diff_reordered_1_uncomp_gates, diff_reordered_2_uncomp_gates
 
 def eval_var_gates(config_data):
         

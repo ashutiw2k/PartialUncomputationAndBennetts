@@ -2,10 +2,10 @@ For 0.0 input-input, Bennetts added 50.0, Reduced Inputs added 47.0, Reordered I
 For 0.1 input-input, Bennetts added 50.0, Reduced Inputs added 47.0, Reordered Inputs by Removing added 47.0, Reordered Inputs by Adding added 47.0
 For 0.2 input-input, Bennetts added 50.0, Reduced Inputs added 47.0, Reordered Inputs by Removing added 47.0, Reordered Inputs by Adding added 47.0
 For 0.3 input-input, Bennetts added 50.0, Reduced Inputs added 46.0, Reordered Inputs by Removing added 46.0, Reordered Inputs by Adding added 46.0
-For 0.4 input-input, Bennetts added 50.0, Reduced Inputs added 45.0, Reordered Inputs by Removing added 45.0, Reordered Inputs by Adding added 45.0
-For 0.5 input-input, Bennetts added 50.0, Reduced Inputs added 43.0, Reordered Inputs by Removing added 43.0, Reordered Inputs by Adding added 43.0
-For 0.6 input-input, Bennetts added 50.0, Reduced Inputs added 42.0, Reordered Inputs by Removing added 42.0, Reordered Inputs by Adding added 42.0
+For 0.4 input-input, Bennetts added 50.0, Reduced Inputs added 46.0, Reordered Inputs by Removing added 46.0, Reordered Inputs by Adding added 46.0
+For 0.5 input-input, Bennetts added 50.0, Reduced Inputs added 44.0, Reordered Inputs by Removing added 44.0, Reordered Inputs by Adding added 44.0
+For 0.6 input-input, Bennetts added 50.0, Reduced Inputs added 44.0, Reordered Inputs by Removing added 44.0, Reordered Inputs by Adding added 44.0
 For 0.7 input-input, Bennetts added 50.0, Reduced Inputs added 40.0, Reordered Inputs by Removing added 40.0, Reordered Inputs by Adding added 40.0
-For 0.8 input-input, Bennetts added 50.0, Reduced Inputs added 37.0, Reordered Inputs by Removing added 36.0, Reordered Inputs by Adding added 36.0
-For 0.9 input-input, Bennetts added 50.0, Reduced Inputs added 24.0, Reordered Inputs by Removing added 16.0, Reordered Inputs by Adding added 16.0
+For 0.8 input-input, Bennetts added 50.0, Reduced Inputs added 34.0, Reordered Inputs by Removing added 34.0, Reordered Inputs by Adding added 33.0
+For 0.9 input-input, Bennetts added 50.0, Reduced Inputs added 25.0, Reordered Inputs by Removing added 25.0, Reordered Inputs by Adding added 21.0
 For 1.0 input-input, Bennetts added 50.0, Reduced Inputs added 0.0, Reordered Inputs by Removing added 0.0, Reordered Inputs by Adding added 0.0
